@@ -21,3 +21,10 @@ __pycache__/
 
 # File used to manually test new changes, contains sensitive data
 /example.py
+
+# Official-identity build: generated TL code is committed on purpose so the
+# library ships the layer-229 schema without a build step.
+!/telethon/tl/functions/
+!/telethon/tl/types/
+!/telethon/tl/alltlobjects.py
+!/telethon/errors/rpcerrorlist.py
