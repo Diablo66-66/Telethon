@@ -18,6 +18,7 @@ from ..network import MTProtoSender, Connection, ConnectionTcpFull, TcpMTProxy
 from ..sessions import Session, SQLiteSession, MemorySession
 from ..tl import functions, types
 from ..tl.alltlobjects import LAYER
+from .. import official
 from .._updates import MessageBox, EntityCache as MbEntityCache, SessionState, ChannelState, Entity, EntityType
 
 try:
@@ -244,8 +245,8 @@ class TelegramBaseClient(abc.ABC):
     def __init__(
             self: 'TelegramClient',
             session: 'typing.Union[str, pathlib.Path, Session]',
-            api_id: int,
-            api_hash: str,
+            api_id: int = None,
+            api_hash: str = None,
             *,
             connection: 'typing.Type[Connection]' = ConnectionTcpFull,
             use_ipv6: bool = False,
@@ -262,8 +263,8 @@ class TelegramBaseClient(abc.ABC):
             device_model: str = None,
             system_version: str = None,
             app_version: str = None,
-            lang_code: str = 'en',
-            system_lang_code: str = 'en',
+            lang_code: str = None,
+            system_lang_code: str = None,
             loop: asyncio.AbstractEventLoop = None,
             base_logger: typing.Union[str, logging.Logger] = None,
             receive_updates: bool = True,
@@ -271,9 +272,11 @@ class TelegramBaseClient(abc.ABC):
             entity_cache_limit: int = 5000
     ):
         if not api_id or not api_hash:
-            raise ValueError(
-                "Your API ID or Hash cannot be empty or None. "
-                "Refer to telethon.rtfd.io for more information.")
+            # Identity has been aligned with the official Telegram Android
+            # client; fall back to its published api_id/api_hash when the
+            # caller does not provide credentials of their own.
+            api_id = official.APP_ID
+            api_hash = official.APP_HASH
 
         self._use_ipv6 = use_ipv6
 
@@ -356,24 +359,19 @@ class TelegramBaseClient(abc.ABC):
 
         # Used on connection. Capture the variables in a lambda since
         # exporting clients need to create this InvokeWithLayerRequest.
-        system = platform.uname()
-
-        if system.machine in ('x86_64', 'AMD64'):
-            default_device_model = 'PC 64bit'
-        elif system.machine in ('i386','i686','x86'):
-            default_device_model = 'PC 32bit'
-        else:
-            default_device_model = system.machine
-        default_system_version = re.sub(r'-.+','',system.release)
-
+        # All initConnection fields below mirror the official Android client.
+        # The native code sends lang_pack = "android" unconditionally and a
+        # params JSONObject (installer/package_id/tz_offset/perf_cat); those
+        # are what mark a session as official on the server side.
         self._init_request = functions.InitConnectionRequest(
             api_id=self.api_id,
-            device_model=device_model or default_device_model or 'Unknown',
-            system_version=system_version or default_system_version or '1.0',
-            app_version=app_version or self.__version__,
-            lang_code=lang_code,
-            system_lang_code=system_lang_code,
-            lang_pack='',  # "langPacks are for official apps only"
+            device_model=device_model or official.DEVICE_MODEL,
+            system_version=system_version or official.SYSTEM_VERSION,
+            app_version=app_version or official.APP_VERSION,
+            lang_code=lang_code or official.LANG_CODE,
+            system_lang_code=system_lang_code or official.SYSTEM_LANG_CODE,
+            lang_pack=official.LANG_PACK,
+            params=official.init_params(),
             query=None,
             proxy=init_proxy
         )
