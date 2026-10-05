@@ -1,6 +1,6 @@
 """
 Identity constants mirroring the official Telegram Android client
-(GitHub DrKLO/Telegram, v12.10.1 build 7038, schema layer 229 generation).
+(GitHub DrKLO/Telegram, v12.10.6 build 7112, schema layer 229 generation).
 
 Every connection made by this library sends initConnection params that match
 what the official app produces in
@@ -25,8 +25,8 @@ APP_ID = 4
 APP_HASH = "014b35b6184100b085b0d0572f9b5103"
 
 # gradle.properties: APP_VERSION_NAME / APP_VERSION_CODE / APP_PACKAGE
-VERSION_NAME = "12.10.1"
-VERSION_CODE = 7038
+VERSION_NAME = "12.10.6"
+VERSION_CODE = 7112
 PACKAGE_ID = "org.telegram.messenger"
 
 # Java: appVersion = pInfo.versionName + " (" + pInfo.versionCode + ")"
