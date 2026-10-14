@@ -4780,6 +4780,42 @@ class FrozenParticipantMissingError(BadRequestError):
         return type(self), (self.request,)
 
 
+class ChatSendVoicesForbiddenError(ForbiddenError):
+    def __init__(self, request):
+        self.request = request
+        super(Exception, self).__init__('You cannot send voices results in this chat' + self._fmt_request(self.request))
+
+    def __reduce__(self):
+        return type(self), (self.request,)
+
+
+class ChatSendPhotosForbiddenError(ForbiddenError):
+    def __init__(self, request):
+        self.request = request
+        super(Exception, self).__init__('You cannot send photos results in this chat' + self._fmt_request(self.request))
+
+    def __reduce__(self):
+        return type(self), (self.request,)
+
+
+class ChatSendVideosForbiddenError(ForbiddenError):
+    def __init__(self, request):
+        self.request = request
+        super(Exception, self).__init__('You cannot send videos results in this Chat' + self._fmt_request(self.request))
+
+    def __reduce__(self):
+        return type(self), (self.request,)
+
+
+class ChatSendPlainForbiddenError(ForbiddenError):
+    def __init__(self, request):
+        self.request = request
+        super(Exception, self).__init__('You cannot send plain results in this chat' + self._fmt_request(self.request))
+
+    def __reduce__(self):
+        return type(self), (self.request,)
+
+
 rpc_errors_dict = {
     'ABOUT_TOO_LONG': AboutTooLongError,
     'ACCESS_TOKEN_EXPIRED': AccessTokenExpiredError,
@@ -5292,6 +5328,10 @@ rpc_errors_dict = {
     'YOU_BLOCKED_USER': YouBlockedUserError,
     'FROZEN_METHOD_INVALID': FrozenMethodInvalidError,
     'FROZEN_PARTICIPANT_MISSING': FrozenParticipantMissingError,
+    'CHAT_SEND_VOICES_FORBIDDEN': ChatSendVoicesForbiddenError,
+    'CHAT_SEND_PHOTOS_FORBIDDEN': ChatSendPhotosForbiddenError,
+    'CHAT_SEND_VIDEOS_FORBIDDEN': ChatSendVideosForbiddenError,
+    'CHAT_SEND_PLAIN_FORBIDDEN': ChatSendPlainForbiddenError,
 }
 
 rpc_errors_re = (

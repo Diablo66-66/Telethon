@@ -1,3 +1,14 @@
+"""DEPRECATED — superseded by /root/scripts/tg-layer-upgrade/.
+
+Kept for reference. This tool hardcoded layer 229 and has been replaced by the
+layer-agnostic pipeline documented in /root/scripts/tg-layer-upgrade/README.md:
+
+    python3 json_to_api_tl.py <tlscheme.json> <out.tl> --layer <N>
+    cd /root/Telegram_Android && /usr/bin/python3 setup.py gen tl errors
+
+Do NOT use this file to regenerate the schema; its hardcoded LAYER will ship a
+stale layer. Use the pipeline above instead.
+"""
 """Regenerate telethon/tl from a .tl schema using the repo's own generator."""
 import sys
 from pathlib import Path

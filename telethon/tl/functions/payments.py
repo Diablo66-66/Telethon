@@ -402,6 +402,101 @@ class CraftStarGiftRequest(TLRequest):
         return cls(stargift=_stargift)
 
 
+class CreateOnrampSessionRequest(TLRequest):
+    CONSTRUCTOR_ID = 0xa2197cf6
+    SUBCLASS_OF_ID = 0x4f68fd23
+
+    def __init__(self, provider: str, crypto_currency: str, address: str, payment_method: Optional[str]=None, base_currency: Optional[str]=None, base_amount: Optional[str]=None, memo: Optional[str]=None, theme: Optional[str]=None, success_return_url: Optional[str]=None, fail_return_url: Optional[str]=None, crypto_amount: Optional[str]=None):
+        """
+        :returns OnrampSession: Instance of OnrampSession.
+        """
+        self.provider = provider
+        self.crypto_currency = crypto_currency
+        self.address = address
+        self.payment_method = payment_method
+        self.base_currency = base_currency
+        self.base_amount = base_amount
+        self.memo = memo
+        self.theme = theme
+        self.success_return_url = success_return_url
+        self.fail_return_url = fail_return_url
+        self.crypto_amount = crypto_amount
+
+    def to_dict(self):
+        return {
+            '_': 'CreateOnrampSessionRequest',
+            'provider': self.provider,
+            'crypto_currency': self.crypto_currency,
+            'address': self.address,
+            'payment_method': self.payment_method,
+            'base_currency': self.base_currency,
+            'base_amount': self.base_amount,
+            'memo': self.memo,
+            'theme': self.theme,
+            'success_return_url': self.success_return_url,
+            'fail_return_url': self.fail_return_url,
+            'crypto_amount': self.crypto_amount
+        }
+
+    def _bytes(self):
+        return b''.join((
+            b'\xf6|\x19\xa2',
+            struct.pack('<I', (0 if self.payment_method is None or self.payment_method is False else 1) | (0 if self.base_currency is None or self.base_currency is False else 2) | (0 if self.base_amount is None or self.base_amount is False else 4) | (0 if self.memo is None or self.memo is False else 8) | (0 if self.theme is None or self.theme is False else 16) | (0 if self.success_return_url is None or self.success_return_url is False else 32) | (0 if self.fail_return_url is None or self.fail_return_url is False else 64) | (0 if self.crypto_amount is None or self.crypto_amount is False else 128)),
+            self.serialize_bytes(self.provider),
+            self.serialize_bytes(self.crypto_currency),
+            self.serialize_bytes(self.address),
+            b'' if self.payment_method is None or self.payment_method is False else (self.serialize_bytes(self.payment_method)),
+            b'' if self.base_currency is None or self.base_currency is False else (self.serialize_bytes(self.base_currency)),
+            b'' if self.base_amount is None or self.base_amount is False else (self.serialize_bytes(self.base_amount)),
+            b'' if self.memo is None or self.memo is False else (self.serialize_bytes(self.memo)),
+            b'' if self.theme is None or self.theme is False else (self.serialize_bytes(self.theme)),
+            b'' if self.success_return_url is None or self.success_return_url is False else (self.serialize_bytes(self.success_return_url)),
+            b'' if self.fail_return_url is None or self.fail_return_url is False else (self.serialize_bytes(self.fail_return_url)),
+            b'' if self.crypto_amount is None or self.crypto_amount is False else (self.serialize_bytes(self.crypto_amount)),
+        ))
+
+    @classmethod
+    def from_reader(cls, reader):
+        flags = reader.read_int()
+
+        _provider = reader.tgread_string()
+        _crypto_currency = reader.tgread_string()
+        _address = reader.tgread_string()
+        if flags & 1:
+            _payment_method = reader.tgread_string()
+        else:
+            _payment_method = None
+        if flags & 2:
+            _base_currency = reader.tgread_string()
+        else:
+            _base_currency = None
+        if flags & 4:
+            _base_amount = reader.tgread_string()
+        else:
+            _base_amount = None
+        if flags & 8:
+            _memo = reader.tgread_string()
+        else:
+            _memo = None
+        if flags & 16:
+            _theme = reader.tgread_string()
+        else:
+            _theme = None
+        if flags & 32:
+            _success_return_url = reader.tgread_string()
+        else:
+            _success_return_url = None
+        if flags & 64:
+            _fail_return_url = reader.tgread_string()
+        else:
+            _fail_return_url = None
+        if flags & 128:
+            _crypto_amount = reader.tgread_string()
+        else:
+            _crypto_amount = None
+        return cls(provider=_provider, crypto_currency=_crypto_currency, address=_address, payment_method=_payment_method, base_currency=_base_currency, base_amount=_base_amount, memo=_memo, theme=_theme, success_return_url=_success_return_url, fail_return_url=_fail_return_url, crypto_amount=_crypto_amount)
+
+
 class CreateStarGiftCollectionRequest(TLRequest):
     CONSTRUCTOR_ID = 0x1f4a0e87
     SUBCLASS_OF_ID = 0x43e0cb4a
@@ -741,6 +836,25 @@ class GetCraftStarGiftsRequest(TLRequest):
         return cls(gift_id=_gift_id, offset=_offset, limit=_limit)
 
 
+class GetCurrencyRatesRequest(TLRequest):
+    CONSTRUCTOR_ID = 0xd35983e8
+    SUBCLASS_OF_ID = 0x11d1c3c1
+
+    def to_dict(self):
+        return {
+            '_': 'GetCurrencyRatesRequest'
+        }
+
+    def _bytes(self):
+        return b''.join((
+            b'\xe8\x83Y\xd3',
+        ))
+
+    @classmethod
+    def from_reader(cls, reader):
+        return cls()
+
+
 class GetGiveawayInfoRequest(TLRequest):
     CONSTRUCTOR_ID = 0xf4239425
     SUBCLASS_OF_ID = 0x96a377bd
@@ -774,6 +888,220 @@ class GetGiveawayInfoRequest(TLRequest):
         _peer = reader.tgread_object()
         _msg_id = reader.read_int()
         return cls(peer=_peer, msg_id=_msg_id)
+
+
+class GetOnrampAvailabilityRequest(TLRequest):
+    CONSTRUCTOR_ID = 0x2ec29951
+    SUBCLASS_OF_ID = 0x67ab8072
+
+    def __init__(self, provider: str, crypto_currency: str, base_currency: Optional[str]=None):
+        """
+        :returns OnrampAvailability: Instance of OnrampAvailability.
+        """
+        self.provider = provider
+        self.crypto_currency = crypto_currency
+        self.base_currency = base_currency
+
+    def to_dict(self):
+        return {
+            '_': 'GetOnrampAvailabilityRequest',
+            'provider': self.provider,
+            'crypto_currency': self.crypto_currency,
+            'base_currency': self.base_currency
+        }
+
+    def _bytes(self):
+        return b''.join((
+            b'Q\x99\xc2.',
+            struct.pack('<I', (0 if self.base_currency is None or self.base_currency is False else 1)),
+            self.serialize_bytes(self.provider),
+            self.serialize_bytes(self.crypto_currency),
+            b'' if self.base_currency is None or self.base_currency is False else (self.serialize_bytes(self.base_currency)),
+        ))
+
+    @classmethod
+    def from_reader(cls, reader):
+        flags = reader.read_int()
+
+        _provider = reader.tgread_string()
+        _crypto_currency = reader.tgread_string()
+        if flags & 1:
+            _base_currency = reader.tgread_string()
+        else:
+            _base_currency = None
+        return cls(provider=_provider, crypto_currency=_crypto_currency, base_currency=_base_currency)
+
+
+class GetOnrampBaseCurrenciesRequest(TLRequest):
+    CONSTRUCTOR_ID = 0x1c8bedf3
+    SUBCLASS_OF_ID = 0x1d97512
+
+    def __init__(self, provider: str, crypto_currency: str):
+        """
+        :returns Vector<string>: This type has no constructors.
+        """
+        self.provider = provider
+        self.crypto_currency = crypto_currency
+
+    def to_dict(self):
+        return {
+            '_': 'GetOnrampBaseCurrenciesRequest',
+            'provider': self.provider,
+            'crypto_currency': self.crypto_currency
+        }
+
+    def _bytes(self):
+        return b''.join((
+            b'\xf3\xed\x8b\x1c',
+            self.serialize_bytes(self.provider),
+            self.serialize_bytes(self.crypto_currency),
+        ))
+
+    @classmethod
+    def from_reader(cls, reader):
+        _provider = reader.tgread_string()
+        _crypto_currency = reader.tgread_string()
+        return cls(provider=_provider, crypto_currency=_crypto_currency)
+
+
+class GetOnrampLimitsRequest(TLRequest):
+    CONSTRUCTOR_ID = 0x80e851fd
+    SUBCLASS_OF_ID = 0xc50f6afd
+
+    def __init__(self, provider: str, crypto_currency: str, base_currency: str, payment_method: Optional[str]=None):
+        """
+        :returns OnrampLimits: Instance of OnrampLimits.
+        """
+        self.provider = provider
+        self.crypto_currency = crypto_currency
+        self.base_currency = base_currency
+        self.payment_method = payment_method
+
+    def to_dict(self):
+        return {
+            '_': 'GetOnrampLimitsRequest',
+            'provider': self.provider,
+            'crypto_currency': self.crypto_currency,
+            'base_currency': self.base_currency,
+            'payment_method': self.payment_method
+        }
+
+    def _bytes(self):
+        return b''.join((
+            b'\xfdQ\xe8\x80',
+            struct.pack('<I', (0 if self.payment_method is None or self.payment_method is False else 1)),
+            self.serialize_bytes(self.provider),
+            self.serialize_bytes(self.crypto_currency),
+            self.serialize_bytes(self.base_currency),
+            b'' if self.payment_method is None or self.payment_method is False else (self.serialize_bytes(self.payment_method)),
+        ))
+
+    @classmethod
+    def from_reader(cls, reader):
+        flags = reader.read_int()
+
+        _provider = reader.tgread_string()
+        _crypto_currency = reader.tgread_string()
+        _base_currency = reader.tgread_string()
+        if flags & 1:
+            _payment_method = reader.tgread_string()
+        else:
+            _payment_method = None
+        return cls(provider=_provider, crypto_currency=_crypto_currency, base_currency=_base_currency, payment_method=_payment_method)
+
+
+class GetOnrampProvidersRequest(TLRequest):
+    CONSTRUCTOR_ID = 0x3f3e00dc
+    SUBCLASS_OF_ID = 0xf69a33c2
+
+    def __init__(self, crypto_currency: Optional[str]=None):
+        """
+        :returns Vector<OnrampProviderInfo>: This type has no constructors.
+        """
+        self.crypto_currency = crypto_currency
+
+    def to_dict(self):
+        return {
+            '_': 'GetOnrampProvidersRequest',
+            'crypto_currency': self.crypto_currency
+        }
+
+    def _bytes(self):
+        return b''.join((
+            b'\xdc\x00>?',
+            struct.pack('<I', (0 if self.crypto_currency is None or self.crypto_currency is False else 1)),
+            b'' if self.crypto_currency is None or self.crypto_currency is False else (self.serialize_bytes(self.crypto_currency)),
+        ))
+
+    @classmethod
+    def from_reader(cls, reader):
+        flags = reader.read_int()
+
+        if flags & 1:
+            _crypto_currency = reader.tgread_string()
+        else:
+            _crypto_currency = None
+        return cls(crypto_currency=_crypto_currency)
+
+
+class GetOnrampQuoteRequest(TLRequest):
+    CONSTRUCTOR_ID = 0xe06645fa
+    SUBCLASS_OF_ID = 0xaedc1079
+
+    def __init__(self, provider: str, crypto_currency: str, base_currency: str, base_amount: Optional[str]=None, crypto_amount: Optional[str]=None, payment_method: Optional[str]=None):
+        """
+        :returns OnrampQuote: Instance of OnrampQuote.
+        """
+        self.provider = provider
+        self.crypto_currency = crypto_currency
+        self.base_currency = base_currency
+        self.base_amount = base_amount
+        self.crypto_amount = crypto_amount
+        self.payment_method = payment_method
+
+    def to_dict(self):
+        return {
+            '_': 'GetOnrampQuoteRequest',
+            'provider': self.provider,
+            'crypto_currency': self.crypto_currency,
+            'base_currency': self.base_currency,
+            'base_amount': self.base_amount,
+            'crypto_amount': self.crypto_amount,
+            'payment_method': self.payment_method
+        }
+
+    def _bytes(self):
+        return b''.join((
+            b'\xfaEf\xe0',
+            struct.pack('<I', (0 if self.base_amount is None or self.base_amount is False else 1) | (0 if self.crypto_amount is None or self.crypto_amount is False else 2) | (0 if self.payment_method is None or self.payment_method is False else 4)),
+            self.serialize_bytes(self.provider),
+            self.serialize_bytes(self.crypto_currency),
+            self.serialize_bytes(self.base_currency),
+            b'' if self.base_amount is None or self.base_amount is False else (self.serialize_bytes(self.base_amount)),
+            b'' if self.crypto_amount is None or self.crypto_amount is False else (self.serialize_bytes(self.crypto_amount)),
+            b'' if self.payment_method is None or self.payment_method is False else (self.serialize_bytes(self.payment_method)),
+        ))
+
+    @classmethod
+    def from_reader(cls, reader):
+        flags = reader.read_int()
+
+        _provider = reader.tgread_string()
+        _crypto_currency = reader.tgread_string()
+        _base_currency = reader.tgread_string()
+        if flags & 1:
+            _base_amount = reader.tgread_string()
+        else:
+            _base_amount = None
+        if flags & 2:
+            _crypto_amount = reader.tgread_string()
+        else:
+            _crypto_amount = None
+        if flags & 4:
+            _payment_method = reader.tgread_string()
+        else:
+            _payment_method = None
+        return cls(provider=_provider, crypto_currency=_crypto_currency, base_currency=_base_currency, base_amount=_base_amount, crypto_amount=_crypto_amount, payment_method=_payment_method)
 
 
 class GetPaymentFormRequest(TLRequest):

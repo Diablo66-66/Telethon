@@ -111,6 +111,34 @@ class CancelCodeRequest(TLRequest):
         return cls(phone_number=_phone_number, phone_code_hash=_phone_code_hash)
 
 
+class CancelWebTokenAuthorizationRequest(TLRequest):
+    CONSTRUCTOR_ID = 0x490dada1
+    SUBCLASS_OF_ID = 0xf5b399ac
+
+    def __init__(self, web_auth_token: str):
+        """
+        :returns Bool: This type has no constructors.
+        """
+        self.web_auth_token = web_auth_token
+
+    def to_dict(self):
+        return {
+            '_': 'CancelWebTokenAuthorizationRequest',
+            'web_auth_token': self.web_auth_token
+        }
+
+    def _bytes(self):
+        return b''.join((
+            b'\xa1\xad\rI',
+            self.serialize_bytes(self.web_auth_token),
+        ))
+
+    @classmethod
+    def from_reader(cls, reader):
+        _web_auth_token = reader.tgread_string()
+        return cls(web_auth_token=_web_auth_token)
+
+
 class CheckPaidAuthRequest(TLRequest):
     CONSTRUCTOR_ID = 0x56e59f9c
     SUBCLASS_OF_ID = 0x6ce87081
@@ -554,35 +582,50 @@ class ImportWebTokenAuthorizationRequest(TLRequest):
 
 
 class InitFirebasePnvLoginRequest(TLRequest):
-    CONSTRUCTOR_ID = 0x777df37a
+    CONSTRUCTOR_ID = 0x644f15c0
     SUBCLASS_OF_ID = 0xfa6422a7
 
-    def __init__(self, api_id: int, api_hash: str):
+    def __init__(self, api_id: int, api_hash: str, except_ids: Optional[List[int]]=None):
         """
         :returns auth.FirebasePnvIntent: Instance of FirebasePnvIntent.
         """
         self.api_id = api_id
         self.api_hash = api_hash
+        self.except_ids = except_ids
 
     def to_dict(self):
         return {
             '_': 'InitFirebasePnvLoginRequest',
             'api_id': self.api_id,
-            'api_hash': self.api_hash
+            'api_hash': self.api_hash,
+            'except_ids': [] if self.except_ids is None else self.except_ids[:]
         }
 
     def _bytes(self):
         return b''.join((
-            b'z\xf3}w',
+            b'\xc0\x15Od',
+            struct.pack('<I', (0 if self.except_ids is None or self.except_ids is False else 1)),
+            b'' if self.except_ids is None or self.except_ids is False else b''.join((b'\x15\xc4\xb5\x1c',struct.pack('<i', len(self.except_ids)),b''.join(struct.pack('<q', x) for x in self.except_ids))),
             struct.pack('<i', self.api_id),
             self.serialize_bytes(self.api_hash),
         ))
 
     @classmethod
     def from_reader(cls, reader):
+        flags = reader.read_int()
+
+        if flags & 1:
+            reader.read_int()
+            _except_ids = []
+            for _ in range(reader.read_int()):
+                _x = reader.read_long()
+                _except_ids.append(_x)
+
+        else:
+            _except_ids = None
         _api_id = reader.read_int()
         _api_hash = reader.tgread_string()
-        return cls(api_id=_api_id, api_hash=_api_hash)
+        return cls(api_id=_api_id, api_hash=_api_hash, except_ids=_except_ids)
 
 
 class InitPasskeyLoginRequest(TLRequest):

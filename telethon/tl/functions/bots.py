@@ -6,7 +6,7 @@ import os
 import struct
 from datetime import datetime
 if TYPE_CHECKING:
-    from ...tl.types import TypeBotCommand, TypeBotCommandScope, TypeBotMenuButton, TypeChatAdminRights, TypeDataJSON, TypeEmojiStatus, TypeInputMedia, TypeInputPeer, TypeInputUser, TypeJoinChatBotResult, TypeKeyboardButton
+    from ...tl.types import TypeBotCommand, TypeBotCommandScope, TypeBotMenuButton, TypeChatAdminRights, TypeDataJSON, TypeEmojiStatus, TypeInputMedia, TypeInputPeer, TypeInputUser, TypeJoinChatBotResult, TypeKeyboardButton, TypeTextWithEntities
 
 
 
@@ -48,6 +48,41 @@ class AddPreviewMediaRequest(TLRequest):
         _lang_code = reader.tgread_string()
         _media = reader.tgread_object()
         return cls(bot=_bot, lang_code=_lang_code, media=_media)
+
+
+class AddUsernameRequest(TLRequest):
+    CONSTRUCTOR_ID = 0x3501c08a
+    SUBCLASS_OF_ID = 0xf5b399ac
+
+    def __init__(self, bot: 'TypeInputUser', username: str):
+        """
+        :returns Bool: This type has no constructors.
+        """
+        self.bot = bot
+        self.username = username
+
+    async def resolve(self, client, utils):
+        self.bot = utils.get_input_user(await client.get_input_entity(self.bot))
+
+    def to_dict(self):
+        return {
+            '_': 'AddUsernameRequest',
+            'bot': self.bot.to_dict() if isinstance(self.bot, TLObject) else self.bot,
+            'username': self.username
+        }
+
+    def _bytes(self):
+        return b''.join((
+            b'\x8a\xc0\x015',
+            self.bot._bytes(),
+            self.serialize_bytes(self.username),
+        ))
+
+    @classmethod
+    def from_reader(cls, reader):
+        _bot = reader.tgread_object()
+        _username = reader.tgread_string()
+        return cls(bot=_bot, username=_username)
 
 
 class AllowSendMessageRequest(TLRequest):
@@ -184,31 +219,37 @@ class CheckDownloadFileParamsRequest(TLRequest):
 
 
 class CheckUsernameRequest(TLRequest):
-    CONSTRUCTOR_ID = 0x87f2219b
+    CONSTRUCTOR_ID = 0xe3ac4c61
     SUBCLASS_OF_ID = 0xf5b399ac
 
-    def __init__(self, username: str):
+    def __init__(self, username: str, additional: Optional[bool]=None):
         """
         :returns Bool: This type has no constructors.
         """
         self.username = username
+        self.additional = additional
 
     def to_dict(self):
         return {
             '_': 'CheckUsernameRequest',
-            'username': self.username
+            'username': self.username,
+            'additional': self.additional
         }
 
     def _bytes(self):
         return b''.join((
-            b'\x9b!\xf2\x87',
+            b'aL\xac\xe3',
+            struct.pack('<I', (0 if self.additional is None or self.additional is False else 1)),
             self.serialize_bytes(self.username),
         ))
 
     @classmethod
     def from_reader(cls, reader):
+        flags = reader.read_int()
+
+        _additional = bool(flags & 1)
         _username = reader.tgread_string()
-        return cls(username=_username)
+        return cls(username=_username, additional=_additional)
 
 
 class CreateBotRequest(TLRequest):
@@ -798,6 +839,41 @@ class InvokeWebViewCustomMethodRequest(TLRequest):
         return cls(bot=_bot, custom_method=_custom_method, params=_params)
 
 
+class RemoveUsernameRequest(TLRequest):
+    CONSTRUCTOR_ID = 0xc704147d
+    SUBCLASS_OF_ID = 0xf5b399ac
+
+    def __init__(self, bot: 'TypeInputUser', username: str):
+        """
+        :returns Bool: This type has no constructors.
+        """
+        self.bot = bot
+        self.username = username
+
+    async def resolve(self, client, utils):
+        self.bot = utils.get_input_user(await client.get_input_entity(self.bot))
+
+    def to_dict(self):
+        return {
+            '_': 'RemoveUsernameRequest',
+            'bot': self.bot.to_dict() if isinstance(self.bot, TLObject) else self.bot,
+            'username': self.username
+        }
+
+    def _bytes(self):
+        return b''.join((
+            b'}\x14\x04\xc7',
+            self.bot._bytes(),
+            self.serialize_bytes(self.username),
+        ))
+
+    @classmethod
+    def from_reader(cls, reader):
+        _bot = reader.tgread_object()
+        _username = reader.tgread_string()
+        return cls(bot=_bot, username=_username)
+
+
 class ReorderPreviewMediasRequest(TLRequest):
     CONSTRUCTOR_ID = 0xb627f3aa
     SUBCLASS_OF_ID = 0xf5b399ac
@@ -1182,10 +1258,10 @@ class SetBotMenuButtonRequest(TLRequest):
 
 
 class SetCustomVerificationRequest(TLRequest):
-    CONSTRUCTOR_ID = 0x8b89dfbd
+    CONSTRUCTOR_ID = 0xf4946757
     SUBCLASS_OF_ID = 0xf5b399ac
 
-    def __init__(self, peer: 'TypeInputPeer', enabled: Optional[bool]=None, bot: Optional['TypeInputUser']=None, custom_description: Optional[str]=None):
+    def __init__(self, peer: 'TypeInputPeer', enabled: Optional[bool]=None, bot: Optional['TypeInputUser']=None, custom_description: Optional['TypeTextWithEntities']=None):
         """
         :returns Bool: This type has no constructors.
         """
@@ -1205,16 +1281,16 @@ class SetCustomVerificationRequest(TLRequest):
             'peer': self.peer.to_dict() if isinstance(self.peer, TLObject) else self.peer,
             'enabled': self.enabled,
             'bot': self.bot.to_dict() if isinstance(self.bot, TLObject) else self.bot,
-            'custom_description': self.custom_description
+            'custom_description': self.custom_description.to_dict() if isinstance(self.custom_description, TLObject) else self.custom_description
         }
 
     def _bytes(self):
         return b''.join((
-            b'\xbd\xdf\x89\x8b',
+            b'Wg\x94\xf4',
             struct.pack('<I', (0 if self.enabled is None or self.enabled is False else 2) | (0 if self.bot is None or self.bot is False else 1) | (0 if self.custom_description is None or self.custom_description is False else 4)),
             b'' if self.bot is None or self.bot is False else (self.bot._bytes()),
             self.peer._bytes(),
-            b'' if self.custom_description is None or self.custom_description is False else (self.serialize_bytes(self.custom_description)),
+            b'' if self.custom_description is None or self.custom_description is False else (self.custom_description._bytes()),
         ))
 
     @classmethod
@@ -1228,7 +1304,7 @@ class SetCustomVerificationRequest(TLRequest):
             _bot = None
         _peer = reader.tgread_object()
         if flags & 4:
-            _custom_description = reader.tgread_string()
+            _custom_description = reader.tgread_object()
         else:
             _custom_description = None
         return cls(peer=_peer, enabled=_enabled, bot=_bot, custom_description=_custom_description)

@@ -2,7 +2,7 @@
 from ...tl.tlobject import TLObject
 from ...tl.tlobject import TLRequest
 from typing import Optional, List, Union, TYPE_CHECKING
-from . import account, aicompose, auth, bots, channels, chatlists, communities, contacts, ephemeral, folders, fragment, help, langpack, messages, payments, phone, photos, premium, smsjobs, stats, stickers, stories, updates, upload, users
+from . import account, aicompose, auth, bots, channels, chatlists, communities, contacts, ephemeral, folders, fragment, help, langpack, messages, payments, phone, photos, premium, smsjobs, stats, stickers, stories, toncenter, updates, upload, users, wallet
 import os
 import struct
 from datetime import datetime

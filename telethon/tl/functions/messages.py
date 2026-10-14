@@ -6,7 +6,7 @@ import os
 import struct
 from datetime import datetime
 if TYPE_CHECKING:
-    from ...tl.types import TypeChatBannedRights, TypeChatReactions, TypeDataJSON, TypeDialogFilter, TypeInlineBotSwitchPM, TypeInlineBotWebView, TypeInlineQueryPeerType, TypeInputAiComposeTone, TypeInputBotApp, TypeInputBotInlineMessageID, TypeInputBotInlineResult, TypeInputChannel, TypeInputChatPhoto, TypeInputChatTheme, TypeInputCheckPasswordSRP, TypeInputDialogPeer, TypeInputDocument, TypeInputEncryptedChat, TypeInputEncryptedFile, TypeInputFile, TypeInputGeoPoint, TypeInputMedia, TypeInputMessage, TypeInputMessageReadMetric, TypeInputPeer, TypeInputQuickReplyShortcut, TypeInputReplyTo, TypeInputRichMessage, TypeInputSingleMedia, TypeInputStickerSet, TypeInputStickeredMedia, TypeInputUser, TypeInputWallPaper, TypeMessageEntity, TypeMessagesFilter, TypePaidReactionPrivacy, TypePollAnswer, TypeReaction, TypeReplyMarkup, TypeSendMessageAction, TypeShippingOption, TypeStarsSubscriptionPricing, TypeSuggestedPost, TypeTextWithEntities, TypeTodoItem, TypeWallPaperSettings
+    from ...tl.types import TypeChatBannedRights, TypeChatReactions, TypeDataJSON, TypeDialogFilter, TypeInlineBotSwitchPM, TypeInlineBotWebView, TypeInlineQueryPeerType, TypeInputAiComposeTone, TypeInputBotApp, TypeInputBotInlineMessageID, TypeInputBotInlineResult, TypeInputChannel, TypeInputChatPhoto, TypeInputChatTheme, TypeInputCheckPasswordSRP, TypeInputDialogPeer, TypeInputDocument, TypeInputEncryptedChat, TypeInputEncryptedFile, TypeInputFile, TypeInputGeoPoint, TypeInputMedia, TypeInputMessage, TypeInputMessageReadMetric, TypeInputPeer, TypeInputQuickReplyShortcut, TypeInputReplyTo, TypeInputRichMessage, TypeInputSingleMedia, TypeInputStickerSet, TypeInputStickeredMedia, TypeInputTonConnectOauthSession, TypeInputUser, TypeInputWallPaper, TypeMessageEntity, TypeMessagesFilter, TypePaidReactionPrivacy, TypePollAnswer, TypeReaction, TypeReplyMarkup, TypeSendMessageAction, TypeShippingOption, TypeStarsSubscriptionPricing, TypeSuggestedPost, TypeTextWithEntities, TypeTodoItem, TypeWallPaperSettings
 
 
 
@@ -47,10 +47,10 @@ class AcceptEncryptionRequest(TLRequest):
 
 
 class AcceptUrlAuthRequest(TLRequest):
-    CONSTRUCTOR_ID = 0x67a3f0de
+    CONSTRUCTOR_ID = 0x18dd4e92
     SUBCLASS_OF_ID = 0x7765cb1e
 
-    def __init__(self, write_allowed: Optional[bool]=None, share_phone_number: Optional[bool]=None, peer: Optional['TypeInputPeer']=None, msg_id: Optional[int]=None, button_id: Optional[int]=None, url: Optional[str]=None, match_code: Optional[str]=None):
+    def __init__(self, write_allowed: Optional[bool]=None, share_phone_number: Optional[bool]=None, peer: Optional['TypeInputPeer']=None, msg_id: Optional[int]=None, button_id: Optional[int]=None, url: Optional[str]=None, match_code: Optional[str]=None, tonconnect_session: Optional['TypeInputTonConnectOauthSession']=None):
         """
         :returns UrlAuthResult: Instance of either UrlAuthResultRequest, UrlAuthResultAccepted, UrlAuthResultDefault.
         """
@@ -61,6 +61,7 @@ class AcceptUrlAuthRequest(TLRequest):
         self.button_id = button_id
         self.url = url
         self.match_code = match_code
+        self.tonconnect_session = tonconnect_session
 
     async def resolve(self, client, utils):
         if self.peer:
@@ -75,19 +76,21 @@ class AcceptUrlAuthRequest(TLRequest):
             'msg_id': self.msg_id,
             'button_id': self.button_id,
             'url': self.url,
-            'match_code': self.match_code
+            'match_code': self.match_code,
+            'tonconnect_session': self.tonconnect_session.to_dict() if isinstance(self.tonconnect_session, TLObject) else self.tonconnect_session
         }
 
     def _bytes(self):
         assert ((self.peer or self.peer is not None) and (self.msg_id or self.msg_id is not None) and (self.button_id or self.button_id is not None)) or ((self.peer is None or self.peer is False) and (self.msg_id is None or self.msg_id is False) and (self.button_id is None or self.button_id is False)), 'peer, msg_id, button_id parameters must all be False-y (like None) or all me True-y'
         return b''.join((
-            b'\xde\xf0\xa3g',
-            struct.pack('<I', (0 if self.write_allowed is None or self.write_allowed is False else 1) | (0 if self.share_phone_number is None or self.share_phone_number is False else 8) | (0 if self.peer is None or self.peer is False else 2) | (0 if self.msg_id is None or self.msg_id is False else 2) | (0 if self.button_id is None or self.button_id is False else 2) | (0 if self.url is None or self.url is False else 4) | (0 if self.match_code is None or self.match_code is False else 16)),
+            b'\x92N\xdd\x18',
+            struct.pack('<I', (0 if self.write_allowed is None or self.write_allowed is False else 1) | (0 if self.share_phone_number is None or self.share_phone_number is False else 8) | (0 if self.peer is None or self.peer is False else 2) | (0 if self.msg_id is None or self.msg_id is False else 2) | (0 if self.button_id is None or self.button_id is False else 2) | (0 if self.url is None or self.url is False else 4) | (0 if self.match_code is None or self.match_code is False else 16) | (0 if self.tonconnect_session is None or self.tonconnect_session is False else 32)),
             b'' if self.peer is None or self.peer is False else (self.peer._bytes()),
             b'' if self.msg_id is None or self.msg_id is False else (struct.pack('<i', self.msg_id)),
             b'' if self.button_id is None or self.button_id is False else (struct.pack('<i', self.button_id)),
             b'' if self.url is None or self.url is False else (self.serialize_bytes(self.url)),
             b'' if self.match_code is None or self.match_code is False else (self.serialize_bytes(self.match_code)),
+            b'' if self.tonconnect_session is None or self.tonconnect_session is False else (self.tonconnect_session._bytes()),
         ))
 
     @classmethod
@@ -116,7 +119,11 @@ class AcceptUrlAuthRequest(TLRequest):
             _match_code = reader.tgread_string()
         else:
             _match_code = None
-        return cls(write_allowed=_write_allowed, share_phone_number=_share_phone_number, peer=_peer, msg_id=_msg_id, button_id=_button_id, url=_url, match_code=_match_code)
+        if flags & 32:
+            _tonconnect_session = reader.tgread_object()
+        else:
+            _tonconnect_session = None
+        return cls(write_allowed=_write_allowed, share_phone_number=_share_phone_number, peer=_peer, msg_id=_msg_id, button_id=_button_id, url=_url, match_code=_match_code, tonconnect_session=_tonconnect_session)
 
 
 class AddChatUserRequest(TLRequest):
