@@ -3,7 +3,10 @@ This module holds several utilities regarding RSA and server fingerprints.
 """
 import os
 import struct
+import hashlib
 from hashlib import sha1
+
+from ..crypto.aes import AES
 try:
     import rsa
     import rsa.core
@@ -56,30 +59,104 @@ def add_key(pub, *, old):
 
 def encrypt(fingerprint, data, *, use_old=False):
     """
-    Encrypts the given data known the fingerprint to be used
-    in the way Telegram requires us to do so (sha1(data) + data + padding)
+    Encrypts ``data`` with the server RSA key identified by ``fingerprint``,
+    using the modern rsa_pad scheme required since the 0xd09d1d85de64fd85
+    production key was introduced (mirrors official Telegram Android
+    Handshake.cpp encrypt + TDesktop EncryptUtilities::rsaEncryptV2):
+
+      buf[0:32]     = random AES-256 key
+      buf[32:224]   = AES-256-IGE(data_with_padding, aes_key, iv=0)
+      buf[224:256]  = sha256(buf[32:224])            (iv for the second pass)
+      buf[32:224]   = AES-256-IGE(data_with_padding, aes_key, buf[224:256])
+      buf[0:32]    ^= sha256(buf[32:256])
+      cipher        = RSA(buf[0:256])
+
+    data_with_padding = data followed by random bytes up to 192 total,
+    reversed, so that the server-side checksum check passes with
+    overwhelming probability (retry loop mirrors Handshake.cpp).
+    Old keys (pre-2022) keep the legacy sha1(data) + data + random padding.
 
     :param fingerprint: the fingerprint of the RSA key.
-    :param data: the data to be encrypted.
-    :param use_old: whether old keys should be used.
-    :return:
-        the cipher text, or None if no key matching this fingerprint is found.
+    :param data: the serialized inner data (max 144 bytes).
+    :param use_old: whether old (deprecated) keys should be used.
+    :return: the 256-byte cipher text, or None if no key matches.
     """
     global _server_keys
     key, old = _server_keys.get(fingerprint, [None, None])
     if (not key) or (old and not use_old):
         return None
 
-    # len(sha1.digest) is always 20, so we're left with 255 - 20 - x padding
-    to_encrypt = sha1(data).digest() + data + os.urandom(235 - len(data))
+    if old:
+        # Legacy rsa_pad v1: sha1(data) + data + random padding.
+        to_encrypt = sha1(data).digest() + data + os.urandom(235 - len(data))
+        payload = int.from_bytes(to_encrypt, 'big')
+        encrypted = rsa.core.encrypt_int(payload, key.e, key.n)
+        return encrypted.to_bytes(256, 'big')
 
-    # rsa module rsa.encrypt adds 11 bits for padding which we don't want
-    # rsa module uses rsa.transform.bytes2int(to_encrypt), easier way:
-    payload = int.from_bytes(to_encrypt, 'big')
-    encrypted = rsa.core.encrypt_int(payload, key.e, key.n)
-    # rsa module uses transform.int2bytes(encrypted, keylength), easier:
-    block = encrypted.to_bytes(256, 'big')
-    return block
+    # rsa_pad v2 — exact port of Telegram Android Handshake.cpp encrypt loop.
+    # Buffer layout:
+    #   [0..32)      AES key (random; XORed with final digest at the end)
+    #   [32..224)    padded data (reversed), AES-IGE encrypted in place
+    #   [224..256)   sha256(aes_key || work_area) before encryption
+    #   [256..448)   work area: inner data + random padding
+    #   [448..480)   zero IV area
+    #   [480..512)   final sha256 over the encrypted region
+    if len(data) > 144:
+        raise ValueError('Inner data too large for rsa_pad v2: {}'.format(len(data)))
+
+    key_size = 32
+    iv_size = 32
+    sha_size = 32
+    padded_data_size = 192
+    encrypted_data_size = key_size + padded_data_size + sha_size  # 256
+
+    while True:
+        buf = bytearray(encrypted_data_size + padded_data_size + iv_size + sha_size + 256)
+
+        # 1) inner data at [256..), random padding up to [256..448)
+        buf[encrypted_data_size:encrypted_data_size + len(data)] = data
+        if len(data) < padded_data_size:
+            buf[encrypted_data_size + len(data):encrypted_data_size + padded_data_size] = \
+                os.urandom(padded_data_size - len(data))
+
+        # 2) reversed copy of the work area into [32..224)
+        for i in range(padded_data_size):
+            buf[key_size + i] = buf[encrypted_data_size + padded_data_size - i - 1]
+
+        # 3) random AES key at [0..32)
+        buf[:key_size] = os.urandom(key_size)
+
+        # 4) sha256(aes_key || work_area[256..448)) -> [224..256)
+        h1 = hashlib.sha256(
+            bytes(buf[:key_size])
+            + bytes(buf[encrypted_data_size:encrypted_data_size + padded_data_size])
+        ).digest()
+        buf[key_size + padded_data_size:key_size + padded_data_size + sha_size] = h1
+
+        # 5) AES-256-IGE in place over [32..256) with zero IV
+        enc = AES.encrypt_ige(
+            bytes(buf[key_size:key_size + padded_data_size + sha_size]),
+            bytes(buf[:key_size]),
+            bytes(iv_size),
+        )
+        buf[key_size:key_size + padded_data_size + sha_size] = enc
+
+        # 6) sha256 over the encrypted 224 bytes -> [480..512)
+        tail_offset = encrypted_data_size + padded_data_size + iv_size
+        h2 = hashlib.sha256(
+            bytes(buf[key_size:key_size + padded_data_size + sha_size])
+        ).digest()
+        buf[tail_offset:tail_offset + sha_size] = h2
+
+        # 7) XOR the AES key with h2
+        for i in range(key_size):
+            buf[i] ^= buf[tail_offset + i]
+
+        # 8) retry until buf[0..256) < modulus, then RSA modexp
+        candidate = int.from_bytes(bytes(buf[:encrypted_data_size]), 'big')
+        if candidate < key.n:
+            encrypted = rsa.core.encrypt_int(candidate, key.e, key.n)
+            return encrypted.to_bytes(256, 'big')
 
 
 # Add default keys
@@ -119,6 +196,18 @@ uGnP/RzPEhzXQ9UJ5Ynmh2XJZgHoE9xbnfxL5BXHplJhMtADXKM9bWB11PU1Eioc
 fRLJbY08/Gp66KpQvy7g8w7VB8wlgePexW3pT13Ap6vuC+mQuJPyiHvSxjEKHgqe
 Pji9NP3tJUFQjcECqcm0yV7/2d0t/pbCm+ZH1sadZspQCEPPrtbkQBlvHb4OLiIW
 PGHKSMeRFvp3IWcmdJqXahxLCUS1Eh6MAQIDAQAB
+-----END RSA PUBLIC KEY-----''',
+
+        # Official Telegram Android production key (Handshake.cpp, DrKLO/Telegram):
+        # fingerprint 0xd09d1d85de64fd85 — the ONLY production key used by the
+        # official Android client for auth DH inner-data encryption.
+        '''-----BEGIN RSA PUBLIC KEY-----
+MIIBCgKCAQEA6LszBcC1LGzyr992NzE0ieY+BSaOW622Aa9Bd4ZHLl+TuFQ4lo4g
+5nKaMBwK/BIb9xUfg0Q29/2mgIR6Zr9krM7HjuIcCzFvDtr+L0GQjae9H0pRB2OO
+62cECs5HKhT5DZ98K33vmWiLowc621dQuwKWSQKjWf50XYFw42h21P2KXUGyp2y/
++aEyZ+uVgLLQbRA1dEjSDZ2iGRy12Mk5gpYc397aYp438fsJoHIgJ2lgMv5h7WY9
+t6N/byY9Nw9p21Og3AoXSL2q/2IJ1WRUhebgAdGVMlV1fkuOQoEzR7EdpqtQD9Cs
+5+bfo3Nhmcyvk5ftB0WkJ9z6bNZ7yxrP8wIDAQAB
 -----END RSA PUBLIC KEY-----''',
 
 ):

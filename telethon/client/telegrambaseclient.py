@@ -14,7 +14,7 @@ import warnings
 from .. import utils, version, helpers, __name__ as __base_name__
 from ..crypto import rsa
 from ..extensions import markdown
-from ..network import MTProtoSender, Connection, ConnectionTcpFull, TcpMTProxy
+from ..network import MTProtoSender, Connection, ConnectionTcpObfuscated, TcpMTProxy
 from ..sessions import Session, SQLiteSession, MemorySession
 from ..tl import functions, types
 from ..tl.alltlobjects import LAYER
@@ -104,7 +104,12 @@ class TelegramBaseClient(abc.ABC):
             The connection instance to be used when creating a new connection
             to the servers. It **must** be a type.
 
-            Defaults to `telethon.network.connection.tcpfull.ConnectionTcpFull`.
+            Defaults to
+            `telethon.network.connection.tcpobfuscated.ConnectionTcpObfuscated`,
+            matching the official Telegram Android client which, when not
+            using a proxy, always connects with the obfuscated "EF" transport
+            (64-byte random header + abridged framing, tag 0xefefefef).
+            See TMessagesProj/jni/tgnet/Connection.cpp (ProtocolTypeEF).
 
         use_ipv6 (`bool`, optional):
             Whether to connect to the servers through IPv6 or not.
@@ -248,7 +253,7 @@ class TelegramBaseClient(abc.ABC):
             api_id: int = None,
             api_hash: str = None,
             *,
-            connection: 'typing.Type[Connection]' = ConnectionTcpFull,
+            connection: 'typing.Type[Connection]' = ConnectionTcpObfuscated,
             use_ipv6: bool = False,
             proxy: typing.Union[tuple, dict] = None,
             local_addr: typing.Union[str, tuple] = None,

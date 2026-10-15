@@ -17,14 +17,29 @@ class ObfuscatedIO:
          self._encrypt,
          self._decrypt) = self.init_header(connection.packet_codec)
 
+    # 4-byte prefixes the server (and official clients) treat as other
+    # protocols, so a random obfuscated header must never start with them.
+    # Mirrors the little-endian dword reject-list of the official Telegram
+    # Android client, TMessagesProj/jni/tgnet/Connection.cpp:527:
+    #
+    #   val = bytes[3]<<24 | bytes[2]<<16 | bytes[1]<<8 | bytes[0]
+    #   reject if bytes[0] == 0xef
+    #          or val in {0x44414548 'HEAD', 0x54534f50 'POST',
+    #                     0x20544547 'GET ', 0x4954504f 'OPTI',
+    #                     0xeeeeeeee, 0xdddddddd, 0x02010316 TLS}
+    #          or bytes[4:8] (LE) == 0
+    _REJECTED_PREFIXES = (
+        b'HEAD', b'POST', b'GET ', b'OPTI',
+        b'\xee\xee\xee\xee', b'\xdd\xdd\xdd\xdd', b'\x16\x03\x01\x02',
+    )
+
     @staticmethod
     def init_header(packet_codec):
         # Obfuscated messages secrets cannot start with any of these
-        keywords = (b'PVrG', b'GET ', b'POST', b'\xee\xee\xee\xee')
         while True:
             random = os.urandom(64)
             if (random[0] != 0xef and
-                    random[:4] not in keywords and
+                    random[:4] not in ObfuscatedIO._REJECTED_PREFIXES and
                     random[4:8] != b'\0\0\0\0'):
                 break
 
