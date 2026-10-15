@@ -128,7 +128,10 @@ INSTALLER = "com.android.vending"
 
 # Backwards-compatible alias (older callers / probes referenced this name).
 INSTALLER_PLAY_STORE = INSTALLER
-PERF_CAT = 3
+# SharedConfig performance class: LOW=0, AVERAGE=1, HIGH=2.
+# ConnectionsManager.cpp serializes this as perf_cat = class + 1.
+PERFORMANCE_CLASS = 2
+PERF_CAT = PERFORMANCE_CLASS + 1  # Backwards-compatible wire-value alias.
 
 # AndroidUtilities.getCertificateSHA256Fingerprint() = uppercase hex of the
 # SHA256 digest of the DER signing certificate (no separators). This is the
@@ -221,15 +224,12 @@ def device_token(has_google_services: bool = None, directive_time: bool = True,
 
 def init_params(device_token_value=None, tz_offset=None, perf_cat=None,
                 installer=None, data=None, package_id=None):
-    """Build the TL JSONObject passed as initConnection `params`,
-    identical in shape and order to the official native client
-    (ConnectionsManager.cpp:3151-3203):
-    device_token, data, installer, package_id, tz_offset, perf_cat.
+    """Build the TL JSONObject passed as initConnection `params`.
 
-    Every value may be overridden so a caller can keep the params coherent
-    with the specific device/number/region it is impersonating (e.g. a
-    mid-range phone must send a matching perf_cat, an Indonesian number a
-    matching tz_offset). Defaults come from this module's constants.
+    ``perf_cat`` is the SharedConfig performance class (0=low, 1=average,
+    2=high), not the wire value. The official native client serializes it as
+    ``currentPerformanceClass + 1``. The default is the high-performance
+    class used by the existing registration-slot identity.
     """
     from .tl import types
 
@@ -247,8 +247,11 @@ def init_params(device_token_value=None, tz_offset=None, perf_cat=None,
         value=package_id if package_id is not None else PACKAGE_ID)))
     value.append(kv("tz_offset", types.JsonNumber(
         value=_tz_offset() if tz_offset is None else int(tz_offset))))
-    value.append(kv("perf_cat", types.JsonNumber(
-        value=PERF_CAT if perf_cat is None else int(perf_cat))))
+    if perf_cat is None:
+        perf_cat = PERFORMANCE_CLASS
+    if not isinstance(perf_cat, int) or isinstance(perf_cat, bool) or not 0 <= perf_cat <= 2:
+        raise ValueError("perf_cat must be 0, 1 or 2 (performance class), got %r" % (perf_cat,))
+    value.append(kv("perf_cat", types.JsonNumber(value=perf_cat + 1)))
     return types.JsonObject(value=value)
 
 

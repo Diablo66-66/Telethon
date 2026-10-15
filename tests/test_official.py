@@ -67,6 +67,7 @@ class TestIdentityConstants:
     def test_perf_cat_is_performance_class_plus_one(self):
         # official ConnectionsManager.cpp: jsonNumber->value = currentPerformanceClass + 1
         # HIGH = 2 in SharedConfig.java, so the wire value must be 3.
+        assert ta_o.PERFORMANCE_CLASS == 2
         assert ta_o.PERF_CAT == 3
 
     def test_certificate_fingerprint(self):
@@ -110,6 +111,20 @@ class TestInitParams:
         assert pairs["package_id"].value.value == "org.telegram.messenger"
         assert pairs["tz_offset"].value.value == 25200
         assert pairs["perf_cat"].value.value == 3
+
+    @pytest.mark.parametrize("performance_class,wire", [(0, 1), (1, 2), (2, 3)])
+    def test_perf_cat_serializes_class_plus_one(self, performance_class, wire):
+        params = ta_o.init_params(
+            device_token_value="TESTTOKEN", tz_offset=25200,
+            perf_cat=performance_class)
+        pairs = {p.key: p for p in params.value}
+        assert pairs["perf_cat"].value.value == wire
+
+    @pytest.mark.parametrize("invalid", [-1, 3, "2", True, 2.0])
+    def test_perf_cat_rejects_invalid_classes(self, invalid):
+        with pytest.raises(ValueError, match="must be 0, 1 or 2"):
+            ta_o.init_params(device_token_value="TESTTOKEN", tz_offset=25200,
+                             perf_cat=invalid)
 
     def test_tz_offset_for_returns_int(self):
         off = ta_o.tz_offset_for("6281234567890")
