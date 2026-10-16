@@ -223,13 +223,20 @@ def device_token(has_google_services: bool = None, directive_time: bool = True,
 
 
 def init_params(device_token_value=None, tz_offset=None, perf_cat=None,
-                installer=None, data=None, package_id=None):
+                installer=None, data=None, package_id=None,
+                performance_class=None):
     """Build the TL JSONObject passed as initConnection `params`.
 
-    ``perf_cat`` is the SharedConfig performance class (0=low, 1=average,
-    2=high), not the wire value. The official native client serializes it as
-    ``currentPerformanceClass + 1``. The default is the high-performance
-    class used by the existing registration-slot identity.
+    ``perf_cat`` is the wire value serialized by the official native client
+    (ConnectionsManager.cpp writes ``currentPerformanceClass + 1``), i.e.
+    1=low, 2=average, 3=high. It is written to the params JSON unchanged.
+    This matches ``DeviceInfo.perf_cat`` in consumers (already ``class + 1``)
+    and this module's ``PERF_CAT``. The default is ``PERF_CAT`` (3, high).
+
+    Callers that hold a SharedConfig performance class (0=low, 1=average,
+    2=high) instead may pass ``performance_class=<0..2>``; it is converted
+    with ``+ 1``. Passing both ``perf_cat`` and ``performance_class`` is an
+    error.
     """
     from .tl import types
 
@@ -247,11 +254,25 @@ def init_params(device_token_value=None, tz_offset=None, perf_cat=None,
         value=package_id if package_id is not None else PACKAGE_ID)))
     value.append(kv("tz_offset", types.JsonNumber(
         value=_tz_offset() if tz_offset is None else int(tz_offset))))
+    if perf_cat is not None and performance_class is not None:
+        raise ValueError(
+            "pass only one of perf_cat (wire 1..3) and performance_class "
+            "(class 0..2), got perf_cat=%r and performance_class=%r"
+            % (perf_cat, performance_class))
+    if performance_class is not None:
+        if (not isinstance(performance_class, int)
+                or isinstance(performance_class, bool)
+                or not 0 <= performance_class <= 2):
+            raise ValueError(
+                "performance_class must be 0, 1 or 2, got %r"
+                % (performance_class,))
+        perf_cat = performance_class + 1
     if perf_cat is None:
-        perf_cat = PERFORMANCE_CLASS
-    if not isinstance(perf_cat, int) or isinstance(perf_cat, bool) or not 0 <= perf_cat <= 2:
-        raise ValueError("perf_cat must be 0, 1 or 2 (performance class), got %r" % (perf_cat,))
-    value.append(kv("perf_cat", types.JsonNumber(value=perf_cat + 1)))
+        perf_cat = PERF_CAT
+    if (not isinstance(perf_cat, int) or isinstance(perf_cat, bool)
+            or not 1 <= perf_cat <= 3):
+        raise ValueError("perf_cat must be 1, 2 or 3 (wire value), got %r" % (perf_cat,))
+    value.append(kv("perf_cat", types.JsonNumber(value=perf_cat)))
     return types.JsonObject(value=value)
 
 

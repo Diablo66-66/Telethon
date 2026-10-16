@@ -112,19 +112,41 @@ class TestInitParams:
         assert pairs["tz_offset"].value.value == 25200
         assert pairs["perf_cat"].value.value == 3
 
-    @pytest.mark.parametrize("performance_class,wire", [(0, 1), (1, 2), (2, 3)])
-    def test_perf_cat_serializes_class_plus_one(self, performance_class, wire):
+    @pytest.mark.parametrize("wire", [1, 2, 3])
+    def test_perf_cat_wire_value_written_unchanged(self, wire):
+        # perf_cat is the wire value (class + 1, as DeviceInfo.perf_cat and
+        # PERF_CAT already are); init_params must not convert it again.
         params = ta_o.init_params(
             device_token_value="TESTTOKEN", tz_offset=25200,
-            perf_cat=performance_class)
+            perf_cat=wire)
+        pairs = {p.key: p for p in params.value}
+        assert pairs["perf_cat"].value.value == wire
+
+    @pytest.mark.parametrize("invalid", [-1, 0, 4, "3", "2", True, False, 3.0, 2.0])
+    def test_perf_cat_rejects_invalid_wire_values(self, invalid):
+        with pytest.raises(ValueError, match="must be 1, 2 or 3"):
+            ta_o.init_params(device_token_value="TESTTOKEN", tz_offset=25200,
+                             perf_cat=invalid)
+
+    @pytest.mark.parametrize("performance_class,wire", [(0, 1), (1, 2), (2, 3)])
+    def test_performance_class_helper_serializes_class_plus_one(
+            self, performance_class, wire):
+        params = ta_o.init_params(
+            device_token_value="TESTTOKEN", tz_offset=25200,
+            performance_class=performance_class)
         pairs = {p.key: p for p in params.value}
         assert pairs["perf_cat"].value.value == wire
 
     @pytest.mark.parametrize("invalid", [-1, 3, "2", True, 2.0])
-    def test_perf_cat_rejects_invalid_classes(self, invalid):
-        with pytest.raises(ValueError, match="must be 0, 1 or 2"):
+    def test_performance_class_rejects_invalid_classes(self, invalid):
+        with pytest.raises(ValueError, match="performance_class must be 0, 1 or 2"):
             ta_o.init_params(device_token_value="TESTTOKEN", tz_offset=25200,
-                             perf_cat=invalid)
+                             performance_class=invalid)
+
+    def test_perf_cat_and_performance_class_are_mutually_exclusive(self):
+        with pytest.raises(ValueError, match="only one of"):
+            ta_o.init_params(device_token_value="TESTTOKEN", tz_offset=25200,
+                             perf_cat=3, performance_class=2)
 
     def test_tz_offset_for_returns_int(self):
         off = ta_o.tz_offset_for("6281234567890")
