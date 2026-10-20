@@ -15,20 +15,20 @@ project yang memakai client Android **WAJIB** memuat build ini, bukan wheel
 - **Referensi identitas:** `/root/Telegram_Android/telethon/official.py`
 - **Schema layer:** **231**
 - **Basis versi:** Telethon (fork), `__version__ = 1.42.0`
-- **Acuan resmi:** Telegram Android **v13.0.2 build 7175** (DrKLO/Telegram, commit `f32ffeec`)
+- **Acuan resmi:** Telegram Android **v13.0.3 build 7183** (DrKLO/Telegram, commit `0aae9598`)
 
 ---
 
 ## 1. Identitas resmi (jangan diubah kecuali mengikuti perilisan client resmi)
 
-Sumber: `telethon/official.py` → cocok dengan **Telegram Android v13.0.2
-build 7175, schema layer 231**.
+Sumber: `telethon/official.py` → cocok dengan **Telegram Android v13.0.3
+build 7183, schema layer 231**.
 
 | Konstanta | Nilai | Catatan |
 |---|---|---|
 | `APP_ID` | `4` | `BuildVars.APP_ID` resmi (dipakai semua project) |
 | `APP_HASH` | `014b35b6184100b085b0d0572f9b5103` | `BuildVars.APP_HASH` resmi |
-| `APP_VERSION` | `13.0.2 (7175)` | `versionName (versionCode)` |
+| `APP_VERSION` | `13.0.3 (7183)` | `versionName (versionCode)` |
 | `SYSTEM_VERSION` | `SDK 36` | Android 16 = compileSdk/targetSdk resmi |
 | `DEVICE_MODEL` | `GooglePixel 7` | Default; project pakai device acak |
 | `LANG_PACK` | `android` | hardcoded di native `wrapInLayer` |
@@ -54,7 +54,7 @@ punya identitasnya sendiri dan **tidak boleh** disamakan dengan tabel di atas.
 |---|---|---|
 | Build library | `/root/Telegram_Android/telethon` (fork, layer **231**) | wheel `telethon` PyPI (layer **227**) |
 | Factory | `make_android_client()` | `Inti.teleton.TelegramClient` + `api=API.TelegramDesktop` |
-| Konstanta | `api_id=4`, `app_version="13.0.2 (7175)"` | `api_id=2040`, `app_version="7.0.4 x64"` |
+| Konstanta | `api_id=4`, `app_version="13.0.3 (7183)"` | `api_id=2040`, `app_version="7.0.4 x64"` |
 | Transport | `ConnectionTcpObfuscated` (obfuscated2) | `ConnectionTcpFull` / default |
 | Namespace request | `AndroidFunctions` / `AndroidTypes` | `telethon.functions` / `telethon.types` |
 
@@ -180,7 +180,7 @@ device untuk SEMUA nomor** yang sudah terdaftar. Nomor lama akan tampak "pindah
 HP" dan berisiko freeze. Tambahkan device hanya saat tidak ada akun lama yang
 masih dipakai, atau tambahkan mekanisme pin per-nomor lebih dulu.
 - `config.ini` (`[config_api]`): `api_id=4`, `api_hash=014b35b6…`,
-  `app_version="13.0.2 (7175)"`, `layer=231`, `lang_code="en"`,
+  `app_version="13.0.3 (7183)"`, `layer=231`, `lang_code="en"`,
   `system_lang_code="en-us"`, `lang_pack="android"`.
 - Transport: `src/session_manager.py` → `connection = ConnectionTcpObfuscated`.
 - `src/telegram_register.py`, `find_version.py`, `LOGIN/login.py`, dan
@@ -194,7 +194,7 @@ masih dipakai, atau tambahkan mekanisme pin per-nomor lebih dulu.
   - memuat device pool dari `/root/AUTO_REGIST/devices.py`,
   - memilih device acak + `SDK 34/35/36`.
 - Konstanta: `ANDROID_API_ID=4`, `ANDROID_API_HASH="014b35b6…"`,
-  `ANDROID_APP_VERSION="13.0.2 (7175)"`, `ANDROID_LANG_CODE="en"`,
+  `ANDROID_APP_VERSION="13.0.3 (7183)"`, `ANDROID_LANG_CODE="en"`,
   `ANDROID_SYSTEM_LANG_CODE="en-us"`.
 - Guard `_assert_android_source()`: gagal keras bila `ta.__file__` tidak di
   `/root/Telegram_Android` atau layer ≠ `official.LAYER` (= 231).
@@ -211,8 +211,8 @@ masih dipakai, atau tambahkan mekanisme pin per-nomor lebih dulu.
 - Loader Android: `session_bot/android_client.py` — sama polanya dgn STOR
   (isolasi `telegram_android`, device dari `/root/AUTO_REGIST/devices.py`,
   guard `_assert_android_source()`).
-- Konstanta Android: `api_id=4`, hash `014b35b6…`, `app_version=13.0.2
-  (7175)`, `lang_code="en"`, `ANDROID_SYSTEM_LANG_CODE="en-us"`.
+- Konstanta Android: `api_id=4`, hash `014b35b6…`, `app_version=13.0.3
+  (7183)`, `lang_code="en"`, `ANDROID_SYSTEM_LANG_CODE="en-us"`.
 - Transport Android: `ConnectionTcpObfuscated`.
 - **Catatan penting:** service ini jalan di **`/usr/bin/python3`** yang juga
   memasang wheel `telethon 1.44.0` (layer 227). Jalur Android **tetap** harus
@@ -383,7 +383,7 @@ from telethon import official
 from telethon.tl.alltlobjects import LAYER
 assert LAYER == 231, LAYER
 assert LAYER == official.LAYER, (LAYER, official.LAYER)
-assert official.APP_VERSION == "13.0.2 (7175)"
+assert official.APP_VERSION == "13.0.3 (7183)"
 assert official.SYSTEM_VERSION == "SDK 36"
 assert official.LANG_PACK == "android"
 assert official.SYSTEM_LANG_CODE == "en-us"
@@ -463,7 +463,7 @@ Saat diminta menyamakan seluruh project dengan kontrak ini, pastikan tiap item:
       loader terisolasi `telegram_android`.
 - [ ] `from telethon.network.connection.tcpobfuscated import ConnectionTcpObfuscated`
       dipakai di **semua** factory Android.
-- [ ] `app_version = "13.0.2 (7175)"`, `layer = 231` (= `official.LAYER`).
+- [ ] `app_version = "13.0.3 (7183)"`, `layer = 231` (= `official.LAYER`).
 - [ ] `lang_code = "en"`, `system_lang_code = "en-us"`, `lang_pack = "android"`.
 - [ ] Device acak dari `/root/AUTO_REGIST/devices.py`, pool mencakup `SDK 36`.
 - [ ] Kunci device **dinormalisasi ke digit** (`_normalize_device_id`) di STOR &

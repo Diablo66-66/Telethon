@@ -1,7 +1,7 @@
 """Fork identity constants vs the official Telegram Android client.
 
-Source of truth: /root/telegram-android-official at commit f32ffee
-(version 13.0.2 build 7175). This suite re-reads the official Java/Kotlin
+Source of truth: /root/telegram-android-official at commit 0aae9598
+(version 13.0.3 build 7183). This suite re-reads the official Java/Kotlin
 sources at test time, so an upstream bump fails loudly instead of silently
 drifting.
 """

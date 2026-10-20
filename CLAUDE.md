@@ -1,7 +1,7 @@
 # AGENTS.md
 ## Overview
-Telethon fork rescrambled to match official Telegram Android: v13.0.2 build
-7175, TL layer 231, api_id 4 / `014b35b6184100b085b0d0572f9b5103`,
+Telethon fork rescrambled to match official Telegram Android: v13.0.3 build
+7183, TL layer 231, api_id 4 / `014b35b6184100b085b0d0572f9b5103`,
 `lang_pack=android`, `system_lang_code=en-us`, SDK 36. Identity single
 source: `telethon/official.py`. Consumers: `/root/AUTO_REGIST` (sys.path),
 `/root/STOR_OTOMATIS` (editable install), `/root/BOT_PRIBADI` (loader as

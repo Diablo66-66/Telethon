@@ -51,7 +51,7 @@ CERT_SHA1 = "9723E5838612E9C7C08CA2C6573B6026D7A51F8F"
 try:
     from .official import VERSION_CODE as _APP_VERSION_CODE, VERSION_NAME as _APP_VERSION_NAME
 except Exception:  # pragma: no cover - official.py ships with the fork
-    _APP_VERSION_CODE, _APP_VERSION_NAME = 7175, "13.0.2"
+    _APP_VERSION_CODE, _APP_VERSION_NAME = 7183, "13.0.3"
 
 CHECKIN_URL = "https://android.clients.google.com/checkin"
 REGISTER_URL = "https://android.clients.google.com/c2dm/register3"
