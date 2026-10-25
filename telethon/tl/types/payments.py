@@ -1294,6 +1294,42 @@ class StarGiftCollectionsNotModified(TLObject):
         return cls()
 
 
+class StarGiftDepositPayload(TLObject):
+    CONSTRUCTOR_ID = 0x725bb4eb
+    SUBCLASS_OF_ID = 0x88f0efb9
+
+    def __init__(self, nft_address: str, payload: bytes, amount: int):
+        """
+        Constructor for payments.StarGiftDepositPayload: Instance of StarGiftDepositPayload.
+        """
+        self.nft_address = nft_address
+        self.payload = payload
+        self.amount = amount
+
+    def to_dict(self):
+        return {
+            '_': 'StarGiftDepositPayload',
+            'nft_address': self.nft_address,
+            'payload': self.payload,
+            'amount': self.amount
+        }
+
+    def _bytes(self):
+        return b''.join((
+            b'\xeb\xb4[r',
+            self.serialize_bytes(self.nft_address),
+            self.serialize_bytes(self.payload),
+            struct.pack('<q', self.amount),
+        ))
+
+    @classmethod
+    def from_reader(cls, reader):
+        _nft_address = reader.tgread_string()
+        _payload = reader.tgread_bytes()
+        _amount = reader.read_long()
+        return cls(nft_address=_nft_address, payload=_payload, amount=_amount)
+
+
 class StarGiftUpgradeAttributes(TLObject):
     CONSTRUCTOR_ID = 0x46c6e36f
     SUBCLASS_OF_ID = 0xf46acef

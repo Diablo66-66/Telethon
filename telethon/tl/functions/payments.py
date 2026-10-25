@@ -576,6 +576,89 @@ class DeleteStarGiftCollectionRequest(TLRequest):
         return cls(peer=_peer, collection_id=_collection_id)
 
 
+class DepositStarGiftRequest(TLRequest):
+    CONSTRUCTOR_ID = 0xc0a2ea9f
+    SUBCLASS_OF_ID = 0x88f0efb9
+
+    def __init__(self, peer: 'TypeInputPeer', slug: str, hide_sender: Optional[bool]=None):
+        """
+        :returns payments.StarGiftDepositPayload: Instance of StarGiftDepositPayload.
+        """
+        self.peer = peer
+        self.slug = slug
+        self.hide_sender = hide_sender
+
+    async def resolve(self, client, utils):
+        self.peer = utils.get_input_peer(await client.get_input_entity(self.peer))
+
+    def to_dict(self):
+        return {
+            '_': 'DepositStarGiftRequest',
+            'peer': self.peer.to_dict() if isinstance(self.peer, TLObject) else self.peer,
+            'slug': self.slug,
+            'hide_sender': self.hide_sender
+        }
+
+    def _bytes(self):
+        return b''.join((
+            b'\x9f\xea\xa2\xc0',
+            struct.pack('<I', (0 if self.hide_sender is None or self.hide_sender is False else 1)),
+            self.peer._bytes(),
+            self.serialize_bytes(self.slug),
+        ))
+
+    @classmethod
+    def from_reader(cls, reader):
+        flags = reader.read_int()
+
+        _hide_sender = bool(flags & 1)
+        _peer = reader.tgread_object()
+        _slug = reader.tgread_string()
+        return cls(peer=_peer, slug=_slug, hide_sender=_hide_sender)
+
+
+class DisplayStarGiftRequest(TLRequest):
+    CONSTRUCTOR_ID = 0x4aa5f0fe
+    SUBCLASS_OF_ID = 0xf5b399ac
+
+    def __init__(self, slug: str, peer: Optional['TypeInputPeer']=None):
+        """
+        :returns Bool: This type has no constructors.
+        """
+        self.slug = slug
+        self.peer = peer
+
+    async def resolve(self, client, utils):
+        if self.peer:
+            self.peer = utils.get_input_peer(await client.get_input_entity(self.peer))
+
+    def to_dict(self):
+        return {
+            '_': 'DisplayStarGiftRequest',
+            'slug': self.slug,
+            'peer': self.peer.to_dict() if isinstance(self.peer, TLObject) else self.peer
+        }
+
+    def _bytes(self):
+        return b''.join((
+            b'\xfe\xf0\xa5J',
+            struct.pack('<I', (0 if self.peer is None or self.peer is False else 1)),
+            b'' if self.peer is None or self.peer is False else (self.peer._bytes()),
+            self.serialize_bytes(self.slug),
+        ))
+
+    @classmethod
+    def from_reader(cls, reader):
+        flags = reader.read_int()
+
+        if flags & 1:
+            _peer = reader.tgread_object()
+        else:
+            _peer = None
+        _slug = reader.tgread_string()
+        return cls(slug=_slug, peer=_peer)
+
+
 class EditConnectedStarRefBotRequest(TLRequest):
     CONSTRUCTOR_ID = 0xe4fca4a3
     SUBCLASS_OF_ID = 0x235e1a67
@@ -1593,35 +1676,38 @@ class GetStarGiftUpgradePreviewRequest(TLRequest):
 
 
 class GetStarGiftWithdrawalUrlRequest(TLRequest):
-    CONSTRUCTOR_ID = 0xd06e93a8
+    CONSTRUCTOR_ID = 0xc8ca817b
     SUBCLASS_OF_ID = 0xa2822dc5
 
-    def __init__(self, stargift: 'TypeInputSavedStarGift', password: 'TypeInputCheckPasswordSRP'):
+    def __init__(self, stargift: 'TypeInputSavedStarGift', tmp_password: bytes):
         """
         :returns payments.StarGiftWithdrawalUrl: Instance of StarGiftWithdrawalUrl.
         """
         self.stargift = stargift
-        self.password = password
+        self.tmp_password = tmp_password
 
     def to_dict(self):
         return {
             '_': 'GetStarGiftWithdrawalUrlRequest',
             'stargift': self.stargift.to_dict() if isinstance(self.stargift, TLObject) else self.stargift,
-            'password': self.password.to_dict() if isinstance(self.password, TLObject) else self.password
+            'tmp_password': self.tmp_password
         }
 
     def _bytes(self):
         return b''.join((
-            b'\xa8\x93n\xd0',
+            b'{\x81\xca\xc8',
+            b'\0\0\0\0',
             self.stargift._bytes(),
-            self.password._bytes(),
+            self.serialize_bytes(self.tmp_password),
         ))
 
     @classmethod
     def from_reader(cls, reader):
+        flags = reader.read_int()
+
         _stargift = reader.tgread_object()
-        _password = reader.tgread_object()
-        return cls(stargift=_stargift, password=_password)
+        _tmp_password = reader.tgread_bytes()
+        return cls(stargift=_stargift, tmp_password=_tmp_password)
 
 
 class GetStarGiftsRequest(TLRequest):
@@ -2762,4 +2848,42 @@ class ValidateRequestedInfoRequest(TLRequest):
         _invoice = reader.tgread_object()
         _info = reader.tgread_object()
         return cls(invoice=_invoice, info=_info, save=_save)
+
+
+class WithdrawStarGiftRequest(TLRequest):
+    CONSTRUCTOR_ID = 0xec2030ae
+    SUBCLASS_OF_ID = 0xf5b399ac
+
+    def __init__(self, stargift: 'TypeInputSavedStarGift', tmp_password: bytes, keep_on_profile: Optional[bool]=None):
+        """
+        :returns Bool: This type has no constructors.
+        """
+        self.stargift = stargift
+        self.tmp_password = tmp_password
+        self.keep_on_profile = keep_on_profile
+
+    def to_dict(self):
+        return {
+            '_': 'WithdrawStarGiftRequest',
+            'stargift': self.stargift.to_dict() if isinstance(self.stargift, TLObject) else self.stargift,
+            'tmp_password': self.tmp_password,
+            'keep_on_profile': self.keep_on_profile
+        }
+
+    def _bytes(self):
+        return b''.join((
+            b'\xae0 \xec',
+            struct.pack('<I', (0 if self.keep_on_profile is None or self.keep_on_profile is False else 1)),
+            self.stargift._bytes(),
+            self.serialize_bytes(self.tmp_password),
+        ))
+
+    @classmethod
+    def from_reader(cls, reader):
+        flags = reader.read_int()
+
+        _keep_on_profile = bool(flags & 1)
+        _stargift = reader.tgread_object()
+        _tmp_password = reader.tgread_bytes()
+        return cls(stargift=_stargift, tmp_password=_tmp_password, keep_on_profile=_keep_on_profile)
 

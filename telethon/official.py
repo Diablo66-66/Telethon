@@ -1,6 +1,6 @@
 """
 Identity constants mirroring the official Telegram Android client
-(GitHub DrKLO/Telegram, v13.0.3 build 7183, schema layer 231 generation).
+(GitHub DrKLO/Telegram, v13.1.1 build 7237, schema layer 232 generation).
 
 Every connection made by this library sends initConnection params that match
 what the official app produces in
@@ -26,8 +26,8 @@ APP_ID = 4
 APP_HASH = "014b35b6184100b085b0d0572f9b5103"
 
 # gradle.properties: APP_VERSION_NAME / APP_VERSION_CODE / APP_PACKAGE
-VERSION_NAME = "13.0.3"
-VERSION_CODE = 7183
+VERSION_NAME = "13.1.1"
+VERSION_CODE = 7237
 PACKAGE_ID = "org.telegram.messenger"
 
 # Java: appVersion = pInfo.versionName + " (" + pInfo.versionCode + ")"
@@ -41,7 +41,7 @@ SYSTEM_VERSION = "SDK 36"
 # Must equal telethon.tl.alltlobjects.LAYER — the generated schema is built
 # from the Android client's tlscheme/<LAYER>.json, so the two can never
 # legitimately diverge. Consumers (e.g. AUTO_REGIST/check.py) assert on this.
-LAYER = 231
+LAYER = 232
 
 # Java: deviceModel = Build.MANUFACTURER + Build.MODEL  (no separator)
 # Representative flagship; override per-device if needed.

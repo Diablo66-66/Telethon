@@ -299,6 +299,39 @@ class ExportContactTokenRequest(TLRequest):
         return cls()
 
 
+class ExportNoPaidMessagesTokenRequest(TLRequest):
+    CONSTRUCTOR_ID = 0x83c586ae
+    SUBCLASS_OF_ID = 0xa13294f0
+
+    def __init__(self, revoke: Optional[bool]=None, temporary: Optional[bool]=None):
+        """
+        :returns ExportedNoPaidMessagesToken: Instance of ExportedNoPaidMessagesToken.
+        """
+        self.revoke = revoke
+        self.temporary = temporary
+
+    def to_dict(self):
+        return {
+            '_': 'ExportNoPaidMessagesTokenRequest',
+            'revoke': self.revoke,
+            'temporary': self.temporary
+        }
+
+    def _bytes(self):
+        return b''.join((
+            b'\xae\x86\xc5\x83',
+            struct.pack('<I', (0 if self.revoke is None or self.revoke is False else 1) | (0 if self.temporary is None or self.temporary is False else 2)),
+        ))
+
+    @classmethod
+    def from_reader(cls, reader):
+        flags = reader.read_int()
+
+        _revoke = bool(flags & 1)
+        _temporary = bool(flags & 2)
+        return cls(revoke=_revoke, temporary=_temporary)
+
+
 class GetBirthdaysRequest(TLRequest):
     CONSTRUCTOR_ID = 0xdaeda864
     SUBCLASS_OF_ID = 0xe7aabff
@@ -652,6 +685,41 @@ class ImportContactsRequest(TLRequest):
             _contacts.append(_x)
 
         return cls(contacts=_contacts)
+
+
+class ImportNoPaidMessagesTokenRequest(TLRequest):
+    CONSTRUCTOR_ID = 0x35a7c6ca
+    SUBCLASS_OF_ID = 0x2da17977
+
+    def __init__(self, user_id: 'TypeInputUser', token: str):
+        """
+        :returns User: Instance of either UserEmpty, User.
+        """
+        self.user_id = user_id
+        self.token = token
+
+    async def resolve(self, client, utils):
+        self.user_id = utils.get_input_user(await client.get_input_entity(self.user_id))
+
+    def to_dict(self):
+        return {
+            '_': 'ImportNoPaidMessagesTokenRequest',
+            'user_id': self.user_id.to_dict() if isinstance(self.user_id, TLObject) else self.user_id,
+            'token': self.token
+        }
+
+    def _bytes(self):
+        return b''.join((
+            b'\xca\xc6\xa75',
+            self.user_id._bytes(),
+            self.serialize_bytes(self.token),
+        ))
+
+    @classmethod
+    def from_reader(cls, reader):
+        _user_id = reader.tgread_object()
+        _token = reader.tgread_string()
+        return cls(user_id=_user_id, token=_token)
 
 
 class ResetSavedRequest(TLRequest):

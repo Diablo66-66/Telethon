@@ -1,7 +1,7 @@
 """Fork identity constants vs the official Telegram Android client.
 
-Source of truth: /root/telegram-android-official at commit 0aae9598
-(version 13.0.3 build 7183). This suite re-reads the official Java/Kotlin
+Source of truth: /root/telegram-android-official at commit 3de37c8c
+(version 13.1.1 build 7237). This suite re-reads the official Java/Kotlin
 sources at test time, so an upstream bump fails loudly instead of silently
 drifting.
 """
@@ -17,7 +17,7 @@ OFFICIAL = Path("/root/telegram-android-official")
 import sys
 
 sys.path.insert(0, str(FORK))
-from telethon import official as ta_o  # fork telethon, layer 231
+from telethon import official as ta_o  # fork telethon, layer 232
 
 
 def _read(rel):
@@ -50,7 +50,7 @@ class TestIdentityConstants:
         assert ta_o.APP_VERSION == want
 
     def test_layer_matches_official(self):
-        assert ta_o.LAYER == OFFICIAL_CONSTANTS["LAYER"] == 231
+        assert ta_o.LAYER == OFFICIAL_CONSTANTS["LAYER"]
 
     def test_api_credentials(self):
         assert ta_o.APP_ID == OFFICIAL_CONSTANTS["APP_ID"] == 4

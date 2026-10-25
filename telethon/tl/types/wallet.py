@@ -5,9 +5,95 @@ import os
 import struct
 from datetime import datetime
 if TYPE_CHECKING:
-    from ...tl.types import TypeChat, TypeDataJSON, TypeTonConnectRequest, TypeTonConnectSession, TypeUser, TypeWalletTransaction, TypeWalletUserAddress, TypeWebDocument
-    from ...tl.types.wallet import TypeNftAttribute, TypeNftItem
+    from ...tl.types.wallet import TypeCardSticker, TypeNftAttribute, TypeNftItem
+    from ...tl.types import TypeChat, TypeDataJSON, TypeMediaAreaCoordinates, TypeStarGift, TypeTonConnectRequest, TypeTonConnectSession, TypeUser, TypeWalletTransaction, TypeWalletUserAddress, TypeWebDocument
 
+
+
+class Card(TLObject):
+    CONSTRUCTOR_ID = 0x8ed043b1
+    SUBCLASS_OF_ID = 0x1f060b97
+
+    def __init__(self, address: str, balance: int, stickers: Optional[List['TypeCardSticker']]=None, bg_nft_item: Optional['TypeNftItem']=None):
+        """
+        Constructor for wallet.Card: Instance of Card.
+        """
+        self.address = address
+        self.balance = balance
+        self.stickers = stickers
+        self.bg_nft_item = bg_nft_item
+
+    def to_dict(self):
+        return {
+            '_': 'Card',
+            'address': self.address,
+            'balance': self.balance,
+            'stickers': [] if self.stickers is None else [x.to_dict() if isinstance(x, TLObject) else x for x in self.stickers],
+            'bg_nft_item': self.bg_nft_item.to_dict() if isinstance(self.bg_nft_item, TLObject) else self.bg_nft_item
+        }
+
+    def _bytes(self):
+        return b''.join((
+            b'\xb1C\xd0\x8e',
+            struct.pack('<I', (0 if self.stickers is None or self.stickers is False else 1) | (0 if self.bg_nft_item is None or self.bg_nft_item is False else 2)),
+            b'' if self.stickers is None or self.stickers is False else b''.join((b'\x15\xc4\xb5\x1c',struct.pack('<i', len(self.stickers)),b''.join(x._bytes() for x in self.stickers))),
+            b'' if self.bg_nft_item is None or self.bg_nft_item is False else (self.bg_nft_item._bytes()),
+            self.serialize_bytes(self.address),
+            struct.pack('<q', self.balance),
+        ))
+
+    @classmethod
+    def from_reader(cls, reader):
+        flags = reader.read_int()
+
+        if flags & 1:
+            reader.read_int()
+            _stickers = []
+            for _ in range(reader.read_int()):
+                _x = reader.tgread_object()
+                _stickers.append(_x)
+
+        else:
+            _stickers = None
+        if flags & 2:
+            _bg_nft_item = reader.tgread_object()
+        else:
+            _bg_nft_item = None
+        _address = reader.tgread_string()
+        _balance = reader.read_long()
+        return cls(address=_address, balance=_balance, stickers=_stickers, bg_nft_item=_bg_nft_item)
+
+
+class CardSticker(TLObject):
+    CONSTRUCTOR_ID = 0xf3010cba
+    SUBCLASS_OF_ID = 0x87c28f79
+
+    def __init__(self, coordinates: 'TypeMediaAreaCoordinates', nft: 'TypeNftItem'):
+        """
+        Constructor for wallet.CardSticker: Instance of CardSticker.
+        """
+        self.coordinates = coordinates
+        self.nft = nft
+
+    def to_dict(self):
+        return {
+            '_': 'CardSticker',
+            'coordinates': self.coordinates.to_dict() if isinstance(self.coordinates, TLObject) else self.coordinates,
+            'nft': self.nft.to_dict() if isinstance(self.nft, TLObject) else self.nft
+        }
+
+    def _bytes(self):
+        return b''.join((
+            b'\xba\x0c\x01\xf3',
+            self.coordinates._bytes(),
+            self.nft._bytes(),
+        ))
+
+    @classmethod
+    def from_reader(cls, reader):
+        _coordinates = reader.tgread_object()
+        _nft = reader.tgread_object()
+        return cls(coordinates=_coordinates, nft=_nft)
 
 
 class EncryptedSecretPhrasePart(TLObject):
@@ -137,10 +223,10 @@ class NftAttribute(TLObject):
 
 
 class NftItem(TLObject):
-    CONSTRUCTOR_ID = 0x3441fd1c
+    CONSTRUCTOR_ID = 0x173dfaf3
     SUBCLASS_OF_ID = 0xd4319a36
 
-    def __init__(self, address: str, owner_address: str, index: str, collection_address: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, image: Optional['TypeWebDocument']=None, image_small: Optional['TypeWebDocument']=None, content_url: Optional['TypeWebDocument']=None, lottie: Optional['TypeWebDocument']=None, attributes: Optional[List['TypeNftAttribute']]=None, extra: Optional['TypeDataJSON']=None):
+    def __init__(self, address: str, owner_address: str, index: str, collection_address: Optional[str]=None, name: Optional[str]=None, description: Optional[str]=None, image: Optional['TypeWebDocument']=None, image_small: Optional['TypeWebDocument']=None, content_url: Optional['TypeWebDocument']=None, lottie: Optional['TypeWebDocument']=None, attributes: Optional[List['TypeNftAttribute']]=None, extra: Optional['TypeDataJSON']=None, gift: Optional['TypeStarGift']=None):
         """
         Constructor for wallet.NftItem: Instance of NftItem.
         """
@@ -156,6 +242,7 @@ class NftItem(TLObject):
         self.lottie = lottie
         self.attributes = attributes
         self.extra = extra
+        self.gift = gift
 
     def to_dict(self):
         return {
@@ -171,13 +258,14 @@ class NftItem(TLObject):
             'content_url': self.content_url.to_dict() if isinstance(self.content_url, TLObject) else self.content_url,
             'lottie': self.lottie.to_dict() if isinstance(self.lottie, TLObject) else self.lottie,
             'attributes': [] if self.attributes is None else [x.to_dict() if isinstance(x, TLObject) else x for x in self.attributes],
-            'extra': self.extra.to_dict() if isinstance(self.extra, TLObject) else self.extra
+            'extra': self.extra.to_dict() if isinstance(self.extra, TLObject) else self.extra,
+            'gift': self.gift.to_dict() if isinstance(self.gift, TLObject) else self.gift
         }
 
     def _bytes(self):
         return b''.join((
-            b'\x1c\xfdA4',
-            struct.pack('<I', (0 if self.collection_address is None or self.collection_address is False else 1) | (0 if self.name is None or self.name is False else 2) | (0 if self.description is None or self.description is False else 4) | (0 if self.image is None or self.image is False else 8) | (0 if self.image_small is None or self.image_small is False else 16) | (0 if self.content_url is None or self.content_url is False else 32) | (0 if self.lottie is None or self.lottie is False else 64) | (0 if self.attributes is None or self.attributes is False else 128) | (0 if self.extra is None or self.extra is False else 256)),
+            b'\xf3\xfa=\x17',
+            struct.pack('<I', (0 if self.collection_address is None or self.collection_address is False else 1) | (0 if self.name is None or self.name is False else 2) | (0 if self.description is None or self.description is False else 4) | (0 if self.image is None or self.image is False else 8) | (0 if self.image_small is None or self.image_small is False else 16) | (0 if self.content_url is None or self.content_url is False else 32) | (0 if self.lottie is None or self.lottie is False else 64) | (0 if self.attributes is None or self.attributes is False else 128) | (0 if self.extra is None or self.extra is False else 256) | (0 if self.gift is None or self.gift is False else 512)),
             b'' if self.collection_address is None or self.collection_address is False else (self.serialize_bytes(self.collection_address)),
             self.serialize_bytes(self.address),
             self.serialize_bytes(self.owner_address),
@@ -190,6 +278,7 @@ class NftItem(TLObject):
             b'' if self.lottie is None or self.lottie is False else (self.lottie._bytes()),
             b'' if self.attributes is None or self.attributes is False else b''.join((b'\x15\xc4\xb5\x1c',struct.pack('<i', len(self.attributes)),b''.join(x._bytes() for x in self.attributes))),
             b'' if self.extra is None or self.extra is False else (self.extra._bytes()),
+            b'' if self.gift is None or self.gift is False else (self.gift._bytes()),
         ))
 
     @classmethod
@@ -240,7 +329,11 @@ class NftItem(TLObject):
             _extra = reader.tgread_object()
         else:
             _extra = None
-        return cls(address=_address, owner_address=_owner_address, index=_index, collection_address=_collection_address, name=_name, description=_description, image=_image, image_small=_image_small, content_url=_content_url, lottie=_lottie, attributes=_attributes, extra=_extra)
+        if flags & 512:
+            _gift = reader.tgread_object()
+        else:
+            _gift = None
+        return cls(address=_address, owner_address=_owner_address, index=_index, collection_address=_collection_address, name=_name, description=_description, image=_image, image_small=_image_small, content_url=_content_url, lottie=_lottie, attributes=_attributes, extra=_extra, gift=_gift)
 
 
 class NftItems(TLObject):

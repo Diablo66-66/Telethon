@@ -6,7 +6,7 @@ import os
 import struct
 from datetime import datetime
 if TYPE_CHECKING:
-    from ...tl.types import TypeChatBannedRights, TypeChatReactions, TypeDataJSON, TypeDialogFilter, TypeInlineBotSwitchPM, TypeInlineBotWebView, TypeInlineQueryPeerType, TypeInputAiComposeTone, TypeInputBotApp, TypeInputBotInlineMessageID, TypeInputBotInlineResult, TypeInputChannel, TypeInputChatPhoto, TypeInputChatTheme, TypeInputCheckPasswordSRP, TypeInputDialogPeer, TypeInputDocument, TypeInputEncryptedChat, TypeInputEncryptedFile, TypeInputFile, TypeInputGeoPoint, TypeInputMedia, TypeInputMessage, TypeInputMessageReadMetric, TypeInputPeer, TypeInputQuickReplyShortcut, TypeInputReplyTo, TypeInputRichMessage, TypeInputSingleMedia, TypeInputStickerSet, TypeInputStickeredMedia, TypeInputTonConnectOauthSession, TypeInputUser, TypeInputWallPaper, TypeMessageEntity, TypeMessagesFilter, TypePaidReactionPrivacy, TypePollAnswer, TypeReaction, TypeReplyMarkup, TypeSendMessageAction, TypeShippingOption, TypeStarsSubscriptionPricing, TypeSuggestedPost, TypeTextWithEntities, TypeTodoItem, TypeWallPaperSettings
+    from ...tl.types import TypeChatBannedRights, TypeChatReactions, TypeDataJSON, TypeDialogFilter, TypeInlineBotSwitchPM, TypeInlineBotWebView, TypeInlineQueryPeerType, TypeInputAiComposeTone, TypeInputBotApp, TypeInputBotInlineMessageID, TypeInputBotInlineResult, TypeInputChannel, TypeInputChatPhoto, TypeInputChatTheme, TypeInputCheckPasswordSRP, TypeInputDialogPeer, TypeInputDocument, TypeInputEncryptedChat, TypeInputEncryptedFile, TypeInputFile, TypeInputGeoPoint, TypeInputMedia, TypeInputMessage, TypeInputMessageReadMetric, TypeInputPeer, TypeInputQuickReplyShortcut, TypeInputReplyTo, TypeInputRichMessage, TypeInputSingleMedia, TypeInputStickerSet, TypeInputStickeredMedia, TypeInputTonConnectOauthSession, TypeInputUser, TypeInputWallPaper, TypeMessageEntity, TypeMessagesFilter, TypePaidReactionPrivacy, TypePollAnswer, TypeReaction, TypeReplyMarkup, TypeSendMessageAction, TypeShareTheme, TypeShippingOption, TypeStarsSubscriptionPricing, TypeSuggestedPost, TypeTextWithEntities, TypeTodoItem, TypeWallPaperSettings
 
 
 
@@ -5488,6 +5488,34 @@ class GetSearchResultsPositionsRequest(TLRequest):
         return cls(peer=_peer, filter=_filter, offset_id=_offset_id, limit=_limit, saved_peer_id=_saved_peer_id)
 
 
+class GetShareThemeBackdropsRequest(TLRequest):
+    CONSTRUCTOR_ID = 0xf4599ef2
+    SUBCLASS_OF_ID = 0x40ee03f3
+
+    def __init__(self, hash: int):
+        """
+        :returns ShareThemeBackdrops: Instance of either ShareThemeBackdropsNotModified, ShareThemeBackdrops.
+        """
+        self.hash = hash
+
+    def to_dict(self):
+        return {
+            '_': 'GetShareThemeBackdropsRequest',
+            'hash': self.hash
+        }
+
+    def _bytes(self):
+        return b''.join((
+            b'\xf2\x9eY\xf4',
+            struct.pack('<i', self.hash),
+        ))
+
+    @classmethod
+    def from_reader(cls, reader):
+        _hash = reader.read_int()
+        return cls(hash=_hash)
+
+
 class GetSplitRangesRequest(TLRequest):
     CONSTRUCTOR_ID = 0x1cff7e08
     SUBCLASS_OF_ID = 0x5ba52504
@@ -10007,6 +10035,41 @@ class SetInlineGameScoreRequest(TLRequest):
         _user_id = reader.tgread_object()
         _score = reader.read_int()
         return cls(id=_id, user_id=_user_id, score=_score, edit_message=_edit_message, force=_force)
+
+
+class SetShareThemeRequest(TLRequest):
+    CONSTRUCTOR_ID = 0x698a9b1a
+    SUBCLASS_OF_ID = 0xf5b399ac
+
+    def __init__(self, peer: 'TypeInputPeer', theme: 'TypeShareTheme'):
+        """
+        :returns Bool: This type has no constructors.
+        """
+        self.peer = peer
+        self.theme = theme
+
+    async def resolve(self, client, utils):
+        self.peer = utils.get_input_peer(await client.get_input_entity(self.peer))
+
+    def to_dict(self):
+        return {
+            '_': 'SetShareThemeRequest',
+            'peer': self.peer.to_dict() if isinstance(self.peer, TLObject) else self.peer,
+            'theme': self.theme.to_dict() if isinstance(self.theme, TLObject) else self.theme
+        }
+
+    def _bytes(self):
+        return b''.join((
+            b'\x1a\x9b\x8ai',
+            self.peer._bytes(),
+            self.theme._bytes(),
+        ))
+
+    @classmethod
+    def from_reader(cls, reader):
+        _peer = reader.tgread_object()
+        _theme = reader.tgread_object()
+        return cls(peer=_peer, theme=_theme)
 
 
 class SetTypingRequest(TLRequest):

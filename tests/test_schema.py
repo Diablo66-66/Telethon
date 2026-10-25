@@ -1,5 +1,5 @@
 """Schema surface: the fork must decode every constructor in the official
-layer-231 API JSON, and spot-checked method classes must exist."""
+layer-232 API JSON, and spot-checked method classes must exist."""
 import importlib.util
 import json
 import re
@@ -12,14 +12,20 @@ FORK = Path("/root/Telegram_Android")
 OFFICIAL = Path("/root/telegram-android-official")
 
 sys.path.insert(0, str(FORK))
-import telethon  # fork telethon (layer 231)
+import telethon  # fork telethon (layer 232)
 
 from telethon.tl import alltlobjects, types as ftypes, functions as ffunctions
 
 
+def _layer():
+    """Layer of the official checkout, read from its Java source."""
+    tlrpc = (OFFICIAL / "TMessagesProj/src/main/java/org/telegram/tgnet/TLRPC.java").read_text()
+    return int(re.search(r"int LAYER\s*=\s*(\d+)", tlrpc).group(1))
+
+
 def _scheme():
     return json.loads(
-        (OFFICIAL / "TMessagesProj_AppTests/tlscheme/231.json").read_text()
+        (OFFICIAL / f"TMessagesProj_AppTests/tlscheme/{_layer()}.json").read_text()
     )
 
 
@@ -29,7 +35,7 @@ PRIMITIVES = {0xBC799737, 0x997275B5, 0x3FEDD339, 0x1CB5C415, 0xC4B9F9BB, 0x5673
 
 class TestSchemaSurface:
     def test_layer(self):
-        assert alltlobjects.LAYER == 231
+        assert alltlobjects.LAYER == _layer()
 
     def test_registry_large_enough(self):
         assert len(alltlobjects.tlobjects) >= 2500

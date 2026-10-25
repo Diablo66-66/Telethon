@@ -6,7 +6,7 @@ import os
 import struct
 from datetime import datetime
 if TYPE_CHECKING:
-    from ...tl.types import TypeInputCheckPasswordSRP, TypeInputUser, TypeInputWalletReplacement, TypeWalletOwnershipProof
+    from ...tl.types import TypeInputCheckPasswordSRP, TypeInputUser, TypeInputWalletCardSticker, TypeInputWalletReplacement, TypeWalletOwnershipProof
 
 
 
@@ -548,6 +548,49 @@ class SendTransferRequest(TLRequest):
         _user_id = reader.tgread_object()
         _random_id = reader.read_long()
         return cls(data_normal=_data_normal, user_id=_user_id, data_gasless=_data_gasless, random_id=_random_id)
+
+
+class SetCardStickersRequest(TLRequest):
+    CONSTRUCTOR_ID = 0x68509ac
+    SUBCLASS_OF_ID = 0x1f060b97
+
+    def __init__(self, stickers: List['TypeInputWalletCardSticker'], bg_nft_address: Optional[str]=None):
+        """
+        :returns wallet.Card: Instance of Card.
+        """
+        self.stickers = stickers
+        self.bg_nft_address = bg_nft_address
+
+    def to_dict(self):
+        return {
+            '_': 'SetCardStickersRequest',
+            'stickers': [] if self.stickers is None else [x.to_dict() if isinstance(x, TLObject) else x for x in self.stickers],
+            'bg_nft_address': self.bg_nft_address
+        }
+
+    def _bytes(self):
+        return b''.join((
+            b'\xac\t\x85\x06',
+            struct.pack('<I', (0 if self.bg_nft_address is None or self.bg_nft_address is False else 1)),
+            b'\x15\xc4\xb5\x1c',struct.pack('<i', len(self.stickers)),b''.join(x._bytes() for x in self.stickers),
+            b'' if self.bg_nft_address is None or self.bg_nft_address is False else (self.serialize_bytes(self.bg_nft_address)),
+        ))
+
+    @classmethod
+    def from_reader(cls, reader):
+        flags = reader.read_int()
+
+        reader.read_int()
+        _stickers = []
+        for _ in range(reader.read_int()):
+            _x = reader.tgread_object()
+            _stickers.append(_x)
+
+        if flags & 1:
+            _bg_nft_address = reader.tgread_string()
+        else:
+            _bg_nft_address = None
+        return cls(stickers=_stickers, bg_nft_address=_bg_nft_address)
 
 
 class TonConnectClaimRequestRequest(TLRequest):
