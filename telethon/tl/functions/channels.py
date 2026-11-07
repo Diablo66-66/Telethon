@@ -1745,16 +1745,17 @@ class ToggleAutotranslationRequest(TLRequest):
 
 
 class ToggleForumRequest(TLRequest):
-    CONSTRUCTOR_ID = 0x3ff75734
+    CONSTRUCTOR_ID = 0xa2952b54
     SUBCLASS_OF_ID = 0x8af52aac
 
-    def __init__(self, channel: 'TypeInputChannel', enabled: bool, tabs: bool):
+    def __init__(self, channel: 'TypeInputChannel', enabled: bool, tabs: bool, sidebar: bool):
         """
         :returns Updates: Instance of either UpdatesTooLong, UpdateShortMessage, UpdateShortChatMessage, UpdateShort, UpdatesCombined, Updates, UpdateShortSentMessage.
         """
         self.channel = channel
         self.enabled = enabled
         self.tabs = tabs
+        self.sidebar = sidebar
 
     async def resolve(self, client, utils):
         self.channel = utils.get_input_channel(await client.get_input_entity(self.channel))
@@ -1764,15 +1765,17 @@ class ToggleForumRequest(TLRequest):
             '_': 'ToggleForumRequest',
             'channel': self.channel.to_dict() if isinstance(self.channel, TLObject) else self.channel,
             'enabled': self.enabled,
-            'tabs': self.tabs
+            'tabs': self.tabs,
+            'sidebar': self.sidebar
         }
 
     def _bytes(self):
         return b''.join((
-            b'4W\xf7?',
+            b'T+\x95\xa2',
             self.channel._bytes(),
             b'\xb5ur\x99' if self.enabled else b'7\x97y\xbc',
             b'\xb5ur\x99' if self.tabs else b'7\x97y\xbc',
+            b'\xb5ur\x99' if self.sidebar else b'7\x97y\xbc',
         ))
 
     @classmethod
@@ -1780,7 +1783,8 @@ class ToggleForumRequest(TLRequest):
         _channel = reader.tgread_object()
         _enabled = reader.tgread_bool()
         _tabs = reader.tgread_bool()
-        return cls(channel=_channel, enabled=_enabled, tabs=_tabs)
+        _sidebar = reader.tgread_bool()
+        return cls(channel=_channel, enabled=_enabled, tabs=_tabs, sidebar=_sidebar)
 
 
 class ToggleJoinRequestRequest(TLRequest):

@@ -541,6 +541,34 @@ class CreateStarGiftCollectionRequest(TLRequest):
         return cls(peer=_peer, title=_title, stargift=_stargift)
 
 
+class DeleteStarGiftRequest(TLRequest):
+    CONSTRUCTOR_ID = 0x3cdaf8aa
+    SUBCLASS_OF_ID = 0xf5b399ac
+
+    def __init__(self, stargift: 'TypeInputSavedStarGift'):
+        """
+        :returns Bool: This type has no constructors.
+        """
+        self.stargift = stargift
+
+    def to_dict(self):
+        return {
+            '_': 'DeleteStarGiftRequest',
+            'stargift': self.stargift.to_dict() if isinstance(self.stargift, TLObject) else self.stargift
+        }
+
+    def _bytes(self):
+        return b''.join((
+            b'\xaa\xf8\xda<',
+            self.stargift._bytes(),
+        ))
+
+    @classmethod
+    def from_reader(cls, reader):
+        _stargift = reader.tgread_object()
+        return cls(stargift=_stargift)
+
+
 class DeleteStarGiftCollectionRequest(TLRequest):
     CONSTRUCTOR_ID = 0xad5648e8
     SUBCLASS_OF_ID = 0xf5b399ac

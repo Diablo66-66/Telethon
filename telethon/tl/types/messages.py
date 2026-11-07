@@ -540,6 +540,40 @@ class BotResults(TLObject):
         return cls(query_id=_query_id, results=_results, cache_time=_cache_time, users=_users, gallery=_gallery, next_offset=_next_offset, switch_pm=_switch_pm, switch_webview=_switch_webview)
 
 
+class BotWidgetQueryAnswer(TLObject):
+    CONSTRUCTOR_ID = 0x95b73023
+    SUBCLASS_OF_ID = 0xa7b102a
+
+    def __init__(self, result: Optional[str]=None):
+        """
+        Constructor for messages.BotWidgetQueryAnswer: Instance of BotWidgetQueryAnswer.
+        """
+        self.result = result
+
+    def to_dict(self):
+        return {
+            '_': 'BotWidgetQueryAnswer',
+            'result': self.result
+        }
+
+    def _bytes(self):
+        return b''.join((
+            b'#0\xb7\x95',
+            struct.pack('<I', (0 if self.result is None or self.result is False else 1)),
+            b'' if self.result is None or self.result is False else (self.serialize_bytes(self.result)),
+        ))
+
+    @classmethod
+    def from_reader(cls, reader):
+        flags = reader.read_int()
+
+        if flags & 1:
+            _result = reader.tgread_string()
+        else:
+            _result = None
+        return cls(result=_result)
+
+
 class ChannelMessages(TLObject):
     CONSTRUCTOR_ID = 0xc776ba4e
     SUBCLASS_OF_ID = 0xd4b40b5e
@@ -3943,4 +3977,68 @@ class WebPagePreview(TLObject):
             _users.append(_x)
 
         return cls(media=_media, chats=_chats, users=_users)
+
+
+class WidgetPublicData(TLObject):
+    CONSTRUCTOR_ID = 0x4493bff
+    SUBCLASS_OF_ID = 0x30e16d71
+
+    def __init__(self, hash: int, data: str, period: int):
+        """
+        Constructor for messages.WidgetPublicData: Instance of either WidgetPublicDataNotModified, WidgetPublicData.
+        """
+        self.hash = hash
+        self.data = data
+        self.period = period
+
+    def to_dict(self):
+        return {
+            '_': 'WidgetPublicData',
+            'hash': self.hash,
+            'data': self.data,
+            'period': self.period
+        }
+
+    def _bytes(self):
+        return b''.join((
+            b'\xff;I\x04',
+            struct.pack('<q', self.hash),
+            self.serialize_bytes(self.data),
+            struct.pack('<i', self.period),
+        ))
+
+    @classmethod
+    def from_reader(cls, reader):
+        _hash = reader.read_long()
+        _data = reader.tgread_string()
+        _period = reader.read_int()
+        return cls(hash=_hash, data=_data, period=_period)
+
+
+class WidgetPublicDataNotModified(TLObject):
+    CONSTRUCTOR_ID = 0xb9196e57
+    SUBCLASS_OF_ID = 0x30e16d71
+
+    def __init__(self, period: int):
+        """
+        Constructor for messages.WidgetPublicData: Instance of either WidgetPublicDataNotModified, WidgetPublicData.
+        """
+        self.period = period
+
+    def to_dict(self):
+        return {
+            '_': 'WidgetPublicDataNotModified',
+            'period': self.period
+        }
+
+    def _bytes(self):
+        return b''.join((
+            b'Wn\x19\xb9',
+            struct.pack('<i', self.period),
+        ))
+
+    @classmethod
+    def from_reader(cls, reader):
+        _period = reader.read_int()
+        return cls(period=_period)
 

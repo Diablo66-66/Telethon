@@ -12,7 +12,7 @@ FORK = Path("/root/Telegram_Android")
 OFFICIAL = Path("/root/telegram-android-official")
 
 sys.path.insert(0, str(FORK))
-import telethon  # fork telethon (layer 232)
+import telethon  # fork telethon (layer 233)
 
 from telethon.tl import alltlobjects, types as ftypes, functions as ffunctions
 

@@ -1,7 +1,7 @@
 """Fork identity constants vs the official Telegram Android client.
 
-Source of truth: /root/telegram-android-official at commit 3de37c8c
-(version 13.1.1 build 7237). This suite re-reads the official Java/Kotlin
+Source of truth: /root/telegram-android-official at commit 7be672ea
+(version 13.2.1 build 7291). This suite re-reads the official Java/Kotlin
 sources at test time, so an upstream bump fails loudly instead of silently
 drifting.
 """
@@ -17,7 +17,7 @@ OFFICIAL = Path("/root/telegram-android-official")
 import sys
 
 sys.path.insert(0, str(FORK))
-from telethon import official as ta_o  # fork telethon, layer 232
+from telethon import official as ta_o  # fork telethon, layer 233
 
 
 def _read(rel):

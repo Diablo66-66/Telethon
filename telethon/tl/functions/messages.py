@@ -6,7 +6,7 @@ import os
 import struct
 from datetime import datetime
 if TYPE_CHECKING:
-    from ...tl.types import TypeChatBannedRights, TypeChatReactions, TypeDataJSON, TypeDialogFilter, TypeInlineBotSwitchPM, TypeInlineBotWebView, TypeInlineQueryPeerType, TypeInputAiComposeTone, TypeInputBotApp, TypeInputBotInlineMessageID, TypeInputBotInlineResult, TypeInputChannel, TypeInputChatPhoto, TypeInputChatTheme, TypeInputCheckPasswordSRP, TypeInputDialogPeer, TypeInputDocument, TypeInputEncryptedChat, TypeInputEncryptedFile, TypeInputFile, TypeInputGeoPoint, TypeInputMedia, TypeInputMessage, TypeInputMessageReadMetric, TypeInputPeer, TypeInputQuickReplyShortcut, TypeInputReplyTo, TypeInputRichMessage, TypeInputSingleMedia, TypeInputStickerSet, TypeInputStickeredMedia, TypeInputTonConnectOauthSession, TypeInputUser, TypeInputWallPaper, TypeMessageEntity, TypeMessagesFilter, TypePaidReactionPrivacy, TypePollAnswer, TypeReaction, TypeReplyMarkup, TypeSendMessageAction, TypeShareTheme, TypeShippingOption, TypeStarsSubscriptionPricing, TypeSuggestedPost, TypeTextWithEntities, TypeTodoItem, TypeWallPaperSettings
+    from ...tl.types import TypeChatBannedRights, TypeChatReactions, TypeDataJSON, TypeDialogFilter, TypeInlineBotSwitchPM, TypeInlineBotWebView, TypeInlineQueryPeerType, TypeInputAiComposeTone, TypeInputBotApp, TypeInputBotInlineMessageID, TypeInputBotInlineResult, TypeInputChannel, TypeInputChatPhoto, TypeInputChatTheme, TypeInputCheckPasswordSRP, TypeInputDialogPeer, TypeInputDocument, TypeInputEncryptedChat, TypeInputEncryptedFile, TypeInputFile, TypeInputGeoPoint, TypeInputMedia, TypeInputMessage, TypeInputMessageReadMetric, TypeInputPeer, TypeInputQuickReplyShortcut, TypeInputReplyTo, TypeInputRichMessage, TypeInputSingleMedia, TypeInputStickerSet, TypeInputStickeredMedia, TypeInputTonConnectOauthSession, TypeInputUser, TypeInputWallPaper, TypeMessageEntity, TypeMessagesFilter, TypePaidReactionPrivacy, TypePollAnswer, TypeReaction, TypeReplyMarkup, TypeSendMessageAction, TypeShareTheme, TypeShippingOption, TypeStarsSubscriptionPricing, TypeSuggestedPost, TypeTextWithEntities, TypeTodoItem, TypeWallPaperSettings, TypeWidgetQueryType
 
 
 
@@ -1918,6 +1918,51 @@ class EditInlineBotMessageRequest(TLRequest):
         return cls(id=_id, no_webpage=_no_webpage, invert_media=_invert_media, message=_message, media=_media, reply_markup=_reply_markup, entities=_entities, rich_message=_rich_message)
 
 
+class EditInlineBotMessageWidgetDataRequest(TLRequest):
+    CONSTRUCTOR_ID = 0x6396ce2b
+    SUBCLASS_OF_ID = 0xf5b399ac
+
+    def __init__(self, id: 'TypeInputBotInlineMessageID', public_data: Optional[str]=None, chat_data: Optional[str]=None):
+        """
+        :returns Bool: This type has no constructors.
+        """
+        self.id = id
+        self.public_data = public_data
+        self.chat_data = chat_data
+
+    def to_dict(self):
+        return {
+            '_': 'EditInlineBotMessageWidgetDataRequest',
+            'id': self.id.to_dict() if isinstance(self.id, TLObject) else self.id,
+            'public_data': self.public_data,
+            'chat_data': self.chat_data
+        }
+
+    def _bytes(self):
+        return b''.join((
+            b'+\xce\x96c',
+            struct.pack('<I', (0 if self.public_data is None or self.public_data is False else 1) | (0 if self.chat_data is None or self.chat_data is False else 2)),
+            self.id._bytes(),
+            b'' if self.public_data is None or self.public_data is False else (self.serialize_bytes(self.public_data)),
+            b'' if self.chat_data is None or self.chat_data is False else (self.serialize_bytes(self.chat_data)),
+        ))
+
+    @classmethod
+    def from_reader(cls, reader):
+        flags = reader.read_int()
+
+        _id = reader.tgread_object()
+        if flags & 1:
+            _public_data = reader.tgread_string()
+        else:
+            _public_data = None
+        if flags & 2:
+            _chat_data = reader.tgread_string()
+        else:
+            _chat_data = None
+        return cls(id=_id, public_data=_public_data, chat_data=_chat_data)
+
+
 class EditMessageRequest(TLRequest):
     CONSTRUCTOR_ID = 0xb106e66c
     SUBCLASS_OF_ID = 0x8af52aac
@@ -2025,6 +2070,58 @@ class EditMessageRequest(TLRequest):
         return cls(peer=_peer, id=_id, no_webpage=_no_webpage, invert_media=_invert_media, message=_message, media=_media, reply_markup=_reply_markup, entities=_entities, schedule_date=_schedule_date, schedule_repeat_period=_schedule_repeat_period, quick_reply_shortcut_id=_quick_reply_shortcut_id, rich_message=_rich_message)
 
 
+class EditMessageWidgetDataRequest(TLRequest):
+    CONSTRUCTOR_ID = 0xf624bc1e
+    SUBCLASS_OF_ID = 0x8af52aac
+
+    def __init__(self, peer: 'TypeInputPeer', id: int, public_data: Optional[str]=None, chat_data: Optional[str]=None):
+        """
+        :returns Updates: Instance of either UpdatesTooLong, UpdateShortMessage, UpdateShortChatMessage, UpdateShort, UpdatesCombined, Updates, UpdateShortSentMessage.
+        """
+        self.peer = peer
+        self.id = id
+        self.public_data = public_data
+        self.chat_data = chat_data
+
+    async def resolve(self, client, utils):
+        self.peer = utils.get_input_peer(await client.get_input_entity(self.peer))
+
+    def to_dict(self):
+        return {
+            '_': 'EditMessageWidgetDataRequest',
+            'peer': self.peer.to_dict() if isinstance(self.peer, TLObject) else self.peer,
+            'id': self.id,
+            'public_data': self.public_data,
+            'chat_data': self.chat_data
+        }
+
+    def _bytes(self):
+        return b''.join((
+            b'\x1e\xbc$\xf6',
+            struct.pack('<I', (0 if self.public_data is None or self.public_data is False else 1) | (0 if self.chat_data is None or self.chat_data is False else 2)),
+            self.peer._bytes(),
+            struct.pack('<i', self.id),
+            b'' if self.public_data is None or self.public_data is False else (self.serialize_bytes(self.public_data)),
+            b'' if self.chat_data is None or self.chat_data is False else (self.serialize_bytes(self.chat_data)),
+        ))
+
+    @classmethod
+    def from_reader(cls, reader):
+        flags = reader.read_int()
+
+        _peer = reader.tgread_object()
+        _id = reader.read_int()
+        if flags & 1:
+            _public_data = reader.tgread_string()
+        else:
+            _public_data = None
+        if flags & 2:
+            _chat_data = reader.tgread_string()
+        else:
+            _chat_data = None
+        return cls(peer=_peer, id=_id, public_data=_public_data, chat_data=_chat_data)
+
+
 class EditQuickReplyShortcutRequest(TLRequest):
     CONSTRUCTOR_ID = 0x5c003cef
     SUBCLASS_OF_ID = 0xf5b399ac
@@ -2055,6 +2152,48 @@ class EditQuickReplyShortcutRequest(TLRequest):
         _shortcut_id = reader.read_int()
         _shortcut = reader.tgread_string()
         return cls(shortcut_id=_shortcut_id, shortcut=_shortcut)
+
+
+class EditWidgetDataRequest(TLRequest):
+    CONSTRUCTOR_ID = 0xeac343c0
+    SUBCLASS_OF_ID = 0xf5b399ac
+
+    def __init__(self, widget_id: int, public_data: str, cache_time: Optional[int]=None):
+        """
+        :returns Bool: This type has no constructors.
+        """
+        self.widget_id = widget_id
+        self.public_data = public_data
+        self.cache_time = cache_time
+
+    def to_dict(self):
+        return {
+            '_': 'EditWidgetDataRequest',
+            'widget_id': self.widget_id,
+            'public_data': self.public_data,
+            'cache_time': self.cache_time
+        }
+
+    def _bytes(self):
+        return b''.join((
+            b'\xc0C\xc3\xea',
+            struct.pack('<I', (0 if self.cache_time is None or self.cache_time is False else 1)),
+            struct.pack('<q', self.widget_id),
+            self.serialize_bytes(self.public_data),
+            b'' if self.cache_time is None or self.cache_time is False else (struct.pack('<i', self.cache_time)),
+        ))
+
+    @classmethod
+    def from_reader(cls, reader):
+        flags = reader.read_int()
+
+        _widget_id = reader.read_long()
+        _public_data = reader.tgread_string()
+        if flags & 1:
+            _cache_time = reader.read_int()
+        else:
+            _cache_time = None
+        return cls(widget_id=_widget_id, public_data=_public_data, cache_time=_cache_time)
 
 
 class ExportChatInviteRequest(TLRequest):
@@ -2660,6 +2799,49 @@ class GetBotCallbackAnswerRequest(TLRequest):
         else:
             _password = None
         return cls(peer=_peer, msg_id=_msg_id, game=_game, data=_data, password=_password)
+
+
+class GetBotWidgetQueryAnswerRequest(TLRequest):
+    CONSTRUCTOR_ID = 0x5c550579
+    SUBCLASS_OF_ID = 0xa7b102a
+
+    def __init__(self, peer: 'TypeInputPeer', msg_id: int, query_type: 'TypeWidgetQueryType', data: bytes):
+        """
+        :returns messages.BotWidgetQueryAnswer: Instance of BotWidgetQueryAnswer.
+        """
+        self.peer = peer
+        self.msg_id = msg_id
+        self.query_type = query_type
+        self.data = data
+
+    async def resolve(self, client, utils):
+        self.peer = utils.get_input_peer(await client.get_input_entity(self.peer))
+
+    def to_dict(self):
+        return {
+            '_': 'GetBotWidgetQueryAnswerRequest',
+            'peer': self.peer.to_dict() if isinstance(self.peer, TLObject) else self.peer,
+            'msg_id': self.msg_id,
+            'query_type': self.query_type.to_dict() if isinstance(self.query_type, TLObject) else self.query_type,
+            'data': self.data
+        }
+
+    def _bytes(self):
+        return b''.join((
+            b'y\x05U\\',
+            self.peer._bytes(),
+            struct.pack('<i', self.msg_id),
+            self.query_type._bytes(),
+            self.serialize_bytes(self.data),
+        ))
+
+    @classmethod
+    def from_reader(cls, reader):
+        _peer = reader.tgread_object()
+        _msg_id = reader.read_int()
+        _query_type = reader.tgread_object()
+        _data = reader.tgread_bytes()
+        return cls(peer=_peer, msg_id=_msg_id, query_type=_query_type, data=_data)
 
 
 class GetChatInviteImportersRequest(TLRequest):
@@ -5691,6 +5873,44 @@ class GetTopReactionsRequest(TLRequest):
         return cls(limit=_limit, hash=_hash)
 
 
+class GetTranscriptionLangsRequest(TLRequest):
+    CONSTRUCTOR_ID = 0xba6cd9aa
+    SUBCLASS_OF_ID = 0x1d97512
+
+    def __init__(self, peer: Optional['TypeInputPeer']=None):
+        """
+        :returns Vector<string>: This type has no constructors.
+        """
+        self.peer = peer
+
+    async def resolve(self, client, utils):
+        if self.peer:
+            self.peer = utils.get_input_peer(await client.get_input_entity(self.peer))
+
+    def to_dict(self):
+        return {
+            '_': 'GetTranscriptionLangsRequest',
+            'peer': self.peer.to_dict() if isinstance(self.peer, TLObject) else self.peer
+        }
+
+    def _bytes(self):
+        return b''.join((
+            b'\xaa\xd9l\xba',
+            struct.pack('<I', (0 if self.peer is None or self.peer is False else 1)),
+            b'' if self.peer is None or self.peer is False else (self.peer._bytes()),
+        ))
+
+    @classmethod
+    def from_reader(cls, reader):
+        flags = reader.read_int()
+
+        if flags & 1:
+            _peer = reader.tgread_object()
+        else:
+            _peer = None
+        return cls(peer=_peer)
+
+
 class GetUnreadMentionsRequest(TLRequest):
     CONSTRUCTOR_ID = 0xf107e790
     SUBCLASS_OF_ID = 0xd4b40b5e
@@ -5956,6 +6176,45 @@ class GetWebPagePreviewRequest(TLRequest):
         else:
             _entities = None
         return cls(message=_message, entities=_entities)
+
+
+class GetWidgetPublicDataRequest(TLRequest):
+    CONSTRUCTOR_ID = 0x6fc53181
+    SUBCLASS_OF_ID = 0x30e16d71
+
+    def __init__(self, peer: 'TypeInputPeer', msg_id: int, hash: int):
+        """
+        :returns messages.WidgetPublicData: Instance of either WidgetPublicDataNotModified, WidgetPublicData.
+        """
+        self.peer = peer
+        self.msg_id = msg_id
+        self.hash = hash
+
+    async def resolve(self, client, utils):
+        self.peer = utils.get_input_peer(await client.get_input_entity(self.peer))
+
+    def to_dict(self):
+        return {
+            '_': 'GetWidgetPublicDataRequest',
+            'peer': self.peer.to_dict() if isinstance(self.peer, TLObject) else self.peer,
+            'msg_id': self.msg_id,
+            'hash': self.hash
+        }
+
+    def _bytes(self):
+        return b''.join((
+            b'\x811\xc5o',
+            self.peer._bytes(),
+            struct.pack('<i', self.msg_id),
+            struct.pack('<q', self.hash),
+        ))
+
+    @classmethod
+    def from_reader(cls, reader):
+        _peer = reader.tgread_object()
+        _msg_id = reader.read_int()
+        _hash = reader.read_long()
+        return cls(peer=_peer, msg_id=_msg_id, hash=_hash)
 
 
 class HideAllChatJoinRequestsRequest(TLRequest):
@@ -9594,6 +9853,44 @@ class SetBotShippingResultsRequest(TLRequest):
         return cls(query_id=_query_id, error=_error, shipping_options=_shipping_options)
 
 
+class SetBotWidgetQueryAnswerRequest(TLRequest):
+    CONSTRUCTOR_ID = 0xf8cdec6a
+    SUBCLASS_OF_ID = 0xf5b399ac
+
+    def __init__(self, query_id: int, result: Optional[str]=None):
+        """
+        :returns Bool: This type has no constructors.
+        """
+        self.query_id = query_id
+        self.result = result
+
+    def to_dict(self):
+        return {
+            '_': 'SetBotWidgetQueryAnswerRequest',
+            'query_id': self.query_id,
+            'result': self.result
+        }
+
+    def _bytes(self):
+        return b''.join((
+            b'j\xec\xcd\xf8',
+            struct.pack('<I', (0 if self.result is None or self.result is False else 1)),
+            struct.pack('<q', self.query_id),
+            b'' if self.result is None or self.result is False else (self.serialize_bytes(self.result)),
+        ))
+
+    @classmethod
+    def from_reader(cls, reader):
+        flags = reader.read_int()
+
+        _query_id = reader.read_long()
+        if flags & 1:
+            _result = reader.tgread_string()
+        else:
+            _result = None
+        return cls(query_id=_query_id, result=_result)
+
+
 class SetChatAvailableReactionsRequest(TLRequest):
     CONSTRUCTOR_ID = 0x864b2581
     SUBCLASS_OF_ID = 0x8af52aac
@@ -10700,6 +10997,34 @@ class TranscribeAudioRequest(TLRequest):
         return cls(peer=_peer, msg_id=_msg_id)
 
 
+class TranscribeAudioFileRequest(TLRequest):
+    CONSTRUCTOR_ID = 0x72d2ef7
+    SUBCLASS_OF_ID = 0x21b24936
+
+    def __init__(self, file: 'TypeInputFile'):
+        """
+        :returns messages.TranscribedAudio: Instance of TranscribedAudio.
+        """
+        self.file = file
+
+    def to_dict(self):
+        return {
+            '_': 'TranscribeAudioFileRequest',
+            'file': self.file.to_dict() if isinstance(self.file, TLObject) else self.file
+        }
+
+    def _bytes(self):
+        return b''.join((
+            b'\xf7.-\x07',
+            self.file._bytes(),
+        ))
+
+    @classmethod
+    def from_reader(cls, reader):
+        _file = reader.tgread_object()
+        return cls(file=_file)
+
+
 class TranslateRichMessageRequest(TLRequest):
     CONSTRUCTOR_ID = 0x1a542004
     SUBCLASS_OF_ID = 0xbfb188f6
@@ -11159,7 +11484,7 @@ class UploadImportedMediaRequest(TLRequest):
 
     def __init__(self, peer: 'TypeInputPeer', import_id: int, file_name: str, media: 'TypeInputMedia'):
         """
-        :returns MessageMedia: Instance of either MessageMediaEmpty, MessageMediaPhoto, MessageMediaGeo, MessageMediaContact, MessageMediaUnsupported, MessageMediaDocument, MessageMediaWebPage, MessageMediaVenue, MessageMediaGame, MessageMediaInvoice, MessageMediaGeoLive, MessageMediaPoll, MessageMediaDice, MessageMediaStory, MessageMediaGiveaway, MessageMediaGiveawayResults, MessageMediaPaidMedia, MessageMediaToDo, MessageMediaVideoStream.
+        :returns MessageMedia: Instance of either MessageMediaEmpty, MessageMediaPhoto, MessageMediaGeo, MessageMediaContact, MessageMediaUnsupported, MessageMediaDocument, MessageMediaWebPage, MessageMediaVenue, MessageMediaGame, MessageMediaInvoice, MessageMediaGeoLive, MessageMediaPoll, MessageMediaDice, MessageMediaStory, MessageMediaGiveaway, MessageMediaGiveawayResults, MessageMediaPaidMedia, MessageMediaToDo, MessageMediaVideoStream, MessageMediaWidget.
         """
         self.peer = peer
         self.import_id = import_id
@@ -11203,7 +11528,7 @@ class UploadMediaRequest(TLRequest):
 
     def __init__(self, peer: 'TypeInputPeer', media: 'TypeInputMedia', business_connection_id: Optional[str]=None):
         """
-        :returns MessageMedia: Instance of either MessageMediaEmpty, MessageMediaPhoto, MessageMediaGeo, MessageMediaContact, MessageMediaUnsupported, MessageMediaDocument, MessageMediaWebPage, MessageMediaVenue, MessageMediaGame, MessageMediaInvoice, MessageMediaGeoLive, MessageMediaPoll, MessageMediaDice, MessageMediaStory, MessageMediaGiveaway, MessageMediaGiveawayResults, MessageMediaPaidMedia, MessageMediaToDo, MessageMediaVideoStream.
+        :returns MessageMedia: Instance of either MessageMediaEmpty, MessageMediaPhoto, MessageMediaGeo, MessageMediaContact, MessageMediaUnsupported, MessageMediaDocument, MessageMediaWebPage, MessageMediaVenue, MessageMediaGame, MessageMediaInvoice, MessageMediaGeoLive, MessageMediaPoll, MessageMediaDice, MessageMediaStory, MessageMediaGiveaway, MessageMediaGiveawayResults, MessageMediaPaidMedia, MessageMediaToDo, MessageMediaVideoStream, MessageMediaWidget.
         """
         self.peer = peer
         self.media = media
