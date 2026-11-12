@@ -1,7 +1,7 @@
 # AGENTS.md
 ## Overview
-Telethon fork rescrambled to match official Telegram Android: v13.2.1 build
-7291, TL layer 233, api_id 4 / `014b35b6184100b085b0d0572f9b5103`,
+Telethon fork rescrambled to match official Telegram Android: v13.2.2 build
+7303, TL layer 233, api_id 4 / `014b35b6184100b085b0d0572f9b5103`,
 `lang_pack=android`, `system_lang_code=en-us`, SDK 36. Identity single
 source: `telethon/official.py`. Consumers: `/root/AUTO_REGIST` (sys.path),
 `/root/STOR_OTOMATIS` (editable install), `/root/BOT_PRIBADI` (loader as
@@ -20,13 +20,13 @@ cd /root/Telegram_Android && /usr/bin/python3 setup.py gen tl errors
 import sys; sys.path.insert(0, "/root/Telegram_Android")
 from telethon import official
 from telethon.tl.alltlobjects import LAYER
-assert LAYER == 232 == official.LAYER
+assert LAYER == official.LAYER
 print("OK: layer", LAYER, official.APP_VERSION)
 PY
 ```
 # then verify consumers + restart services: INTEGRATION.md §5 B–E
 ## Conventions
-- Generator input `telethon_generator/data/api.tl` (header `// LAYER 232`);
+- Generator input `telethon_generator/data/api.tl` (header `// LAYER 233`);
   header and `official.LAYER` move together.
 - Android transport is `ConnectionTcpObfuscated` (obfuscated2, abridged) —
   never plain `ConnectionTcpAbridged`/`Full` on the Android path.
@@ -38,7 +38,7 @@ PY
 - **NEVER** edit `telethon_generator/data/api.tl` directly; it is generated.
 - **NEVER** run `setup.py gen` with a project venv python (no setuptools
   there); only `/usr/bin/python3` qualifies.
-- Two Telethon copies exist (fork @ 232, wheel @ 227) — never mix namespaces.
+- Two Telethon copies exist (fork @ 233, wheel @ 227) — never mix namespaces.
 ## Dependencies
 Generator: setuptools on `/usr/bin/python3` only. Tests: pytest, pytest-asyncio,
 pyaes, rsa (see `dev-requirements.txt`).

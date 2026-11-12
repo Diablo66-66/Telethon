@@ -1,5 +1,5 @@
 """Schema surface: the fork must decode every constructor in the official
-layer-232 API JSON, and spot-checked method classes must exist."""
+current-layer API JSON, and spot-checked method classes must exist."""
 import importlib.util
 import json
 import re
